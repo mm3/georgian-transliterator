@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, existsSync } from 'node:fs';
 import { dirname, join, extname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -50,7 +51,40 @@ const manifestOut = withHash('manifest.webmanifest', manifest);
 writeFileSync(join(dist, manifestOut), manifest);
 renamed.set('manifest.webmanifest', manifestOut);
 
-const html = rewrite(readFileSync(join(root, 'index.html'), 'utf8'));
+// Public URLs shown on the page (footer links, canonical, og:url).
+// Priority: explicit env (set by the workflow) > GitHub Actions env > local `git remote`.
+function siteUrls() {
+  let repoUrl = process.env.REPO_URL || '';
+  let pageUrl = process.env.PAGES_URL || '';
+  let slug = process.env.GITHUB_REPOSITORY || '';
+  if (!slug) {
+    try {
+      const origin = execSync('git remote get-url origin', { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+      const m = /github\.com[:/]([^/]+\/[^/]+?)(?:\.git)?$/.exec(origin);
+      if (m) slug = m[1];
+    } catch { /* no git remote: links are detected at runtime instead */ }
+  }
+  if (slug && !repoUrl) repoUrl = `${process.env.GITHUB_SERVER_URL || 'https://github.com'}/${slug}`;
+  if (slug && !pageUrl) {
+    const [owner, repo] = slug.split('/');
+    pageUrl = repo.toLowerCase() === `${owner.toLowerCase()}.github.io`
+      ? `https://${owner.toLowerCase()}.github.io/`
+      : `https://${owner.toLowerCase()}.github.io/${repo}/`;
+  }
+  if (pageUrl && !pageUrl.endsWith('/')) pageUrl += '/';
+  return { repoUrl, pageUrl };
+}
+const { repoUrl, pageUrl } = siteUrls();
+const attr = v => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+
+let html = rewrite(readFileSync(join(root, 'index.html'), 'utf8'));
+html = html.replace('<meta name="app:page-url" content="">', `<meta name="app:page-url" content="${attr(pageUrl)}">`)
+           .replace('<meta name="app:repo-url" content="">', `<meta name="app:repo-url" content="${attr(repoUrl)}">`);
+if (pageUrl) {
+  html = html.replace('<meta property="og:type" content="website">',
+    `<meta property="og:type" content="website">\n<meta property="og:url" content="${attr(pageUrl)}">\n<link rel="canonical" href="${attr(pageUrl)}">`);
+  html = html.replace(/<meta property="og:image" content="([^"]+)">/, (m, p) => `<meta property="og:image" content="${attr(pageUrl + p)}">`);
+}
 for (const ref of ['manifest.webmanifest', ...ICONS.filter(p => p !== 'icons/icon-maskable-512.png')]) {
   if (html.includes(`"${ref}"`)) throw new Error(`index.html still references unhashed ${ref}`);
 }
@@ -71,4 +105,5 @@ for (const f of ['_headers', '.nojekyll', 'robots.txt']) {
 }
 
 console.log(`Built dist/ — version ${version}`);
+console.log(`  page: ${pageUrl || '(detected at runtime)'}  repo: ${repoUrl || '(detected at runtime)'}`);
 for (const p of precache) console.log('  ' + p);

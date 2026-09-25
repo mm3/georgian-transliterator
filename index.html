@@ -18,6 +18,9 @@
 <meta property="og:title" content="Georgian Transliterator">
 <meta property="og:description" content="Latin or Cyrillic → ქართული · English · Русский. Works fully offline.">
 <meta property="og:image" content="icons/icon-512.png">
+<!-- filled in by scripts/build.mjs from the GitHub repository; empty = detect at runtime -->
+<meta name="app:page-url" content="">
+<meta name="app:repo-url" content="">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
@@ -106,6 +109,11 @@ td.t{color:var(--muted);font-size:12px}
 .letter .rows{font-size:12.5px;color:var(--muted);margin-top:4px}
 .letter .rows b{color:var(--text);font-weight:600}
 .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0 4px}
+.site-links{margin-top:28px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.site-links[hidden]{display:none}
+.site-links a{color:var(--text);text-decoration:none;border-bottom:1px solid var(--border)}
+.site-links a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.site-links a[hidden]{display:none}
 .theme-btn{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
 #updateBar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center;background:var(--text);color:var(--bg);padding:8px 10px 8px 14px;border-radius:10px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.2);max-width:calc(100vw - 32px)}
 #updateBar[hidden]{display:none}
@@ -190,6 +198,11 @@ td.t{color:var(--muted);font-size:12px}
     <p class="note" style="margin-top:0">How each letter is usually typed. In chat-style Latin, ambiguous letters (t → თ/ტ, k → კ/ქ/ყ, p → პ/ფ, ts → ც/წ, ch → ჩ/ჭ) are resolved with the built-in dictionary; unknown words fall back to the most common choice.</p>
     <div class="alpha" id="alphaGrid"></div>
   </section>
+  <footer class="site-links" id="siteLinks" hidden>
+    <a id="linkPage" href="#" hidden>Web app</a>
+    <a id="linkRepo" href="#" rel="noopener" hidden>Source code on GitHub</a>
+    <a id="linkIssues" href="#" rel="noopener" hidden>Report a problem or missing word</a>
+  </footer>
 </div>
 <div id="tip"></div>
 <div id="updateBar" role="status" hidden><span>A new version is available.</span><button id="updateBtn">Reload</button></div>
@@ -2434,6 +2447,25 @@ $('dictQ').addEventListener('input', renderDict);
 $('alphaGrid').innerHTML = [...GEO_LETTERS].map(ch => `<div class="card letter"><div class="big">${ch}</div><div class="rows">national <b>${NATIONAL[ch]}</b><br>chat <b>${CHAT[ch]}</b><br>keyboard <span class="kbd">${KEYB[ch]}</span><br>кириллица <b>${CYR[ch]}</b></div></div>`).join('');
 
 $('note').textContent = `Everything runs in this page with no internet connection. Georgian script is produced letter by letter and checked against a built-in dictionary of ${LEX.length} words and ${PHRASES.length} set phrases, which also handles case endings and postpositions (-ში, -ზე, -თან, -დან, -ის, -ით, plurals in -ებ-). The English and Russian translations come from that dictionary plus simple grammar rules, so they are exact for set phrases, good for short everyday sentences, and rough for long or complex text.`;
+
+// Links to the published page and the GitHub repository.
+// The build fills the <meta> tags; otherwise they are derived from a *.github.io address.
+(function siteLinks(){
+  const meta = n => (document.querySelector(`meta[name="${n}"]`) || {}).content || '';
+  let page = meta('app:page-url'), repo = meta('app:repo-url');
+  const gh = /^([^.]+)\.github\.io$/i.exec(location.hostname);
+  if (gh && location.protocol === 'https:'){
+    const first = location.pathname.split('/').filter(Boolean)[0];
+    const isUserSite = !first || first === 'index.html';
+    if (!page) page = location.origin + '/' + (isUserSite ? '' : first + '/');
+    if (!repo) repo = 'https://github.com/' + gh[1] + '/' + (isUserSite ? gh[1] + '.github.io' : first);
+  }
+  const set = (id, url) => { if (url){ const a = $(id); a.href = url; a.hidden = false; } };
+  if (page){ set('linkPage', page); $('linkPage').textContent = 'Web app: ' + page.replace(/^https?:\/\//, '').replace(/\/$/, ''); }
+  set('linkRepo', repo);
+  if (repo) set('linkIssues', repo.replace(/\/$/, '') + '/issues');
+  $('siteLinks').hidden = !(page || repo);
+})();
 
 // Text arriving from the manifest share target (?text=...) or a link (?q=...)
 (function initialState(){

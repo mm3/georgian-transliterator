@@ -24,10 +24,15 @@ jobs:
         with:
           node-version: 22
 
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Build site
         run: node scripts/build.mjs
-
-      - uses: actions/configure-pages@v5
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
       - uses: actions/upload-pages-artifact@v4
         with:

@@ -41,6 +41,12 @@ Opening `index.html` directly also works (the service worker is simply skipped o
 3. Every push to `main` (or a manual run of the workflow) publishes the site at
    `https://<user>.github.io/<repo>/`. All paths are relative, so any repo name works.
 
+The page footer links to the web app, the repository and its issue tracker. The build
+fills these URLs in from the GitHub repository (`GITHUB_REPOSITORY`, the Pages
+`base_url`, or locally from `git remote get-url origin`); override them with the
+`PAGES_URL` and `REPO_URL` environment variables, e.g. for a custom domain. When a
+built copy has no URLs, the page derives them from a `*.github.io` address at runtime.
+
 ## Caching
 
 The goal is that a visitor downloads the app once and never again until it changes.
