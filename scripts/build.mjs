@@ -78,8 +78,9 @@ const { repoUrl, pageUrl } = siteUrls();
 const attr = v => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
 let html = rewrite(readFileSync(join(root, 'index.html'), 'utf8'));
-html = html.replace('<meta name="app:page-url" content="">', `<meta name="app:page-url" content="${attr(pageUrl)}">`)
-           .replace('<meta name="app:repo-url" content="">', `<meta name="app:repo-url" content="${attr(repoUrl)}">`);
+// Replace the defaults in index.html only when this build knows better (fork, custom domain).
+if (pageUrl) html = html.replace(/<meta name="app:page-url" content="[^"]*">/, `<meta name="app:page-url" content="${attr(pageUrl)}">`);
+if (repoUrl) html = html.replace(/<meta name="app:repo-url" content="[^"]*">/, `<meta name="app:repo-url" content="${attr(repoUrl)}">`);
 if (pageUrl) {
   html = html.replace('<meta property="og:type" content="website">',
     `<meta property="og:type" content="website">\n<meta property="og:url" content="${attr(pageUrl)}">\n<link rel="canonical" href="${attr(pageUrl)}">`);

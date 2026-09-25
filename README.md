@@ -1,5 +1,7 @@
 # Georgian Transliterator
 
+**Web app:** https://mm3.github.io/georgian-transliterator/ · **Source:** https://github.com/mm3/georgian-transliterator · **Issues / missing words:** https://github.com/mm3/georgian-transliterator/issues
+
 Offline web app: type Georgian in Latin or Cyrillic letters and get Georgian script
 (ქართული) plus English and Russian translations. Everything (dictionary, grammar
 rules, UI) lives in a single `index.html`; no network access is needed at runtime.
