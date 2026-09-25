@@ -1,0 +1,2159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Georgian Transliterator</title>
+<meta name="description" content="Offline Georgian transliterator: type Georgian in Latin or Cyrillic letters and get Georgian script plus English and Russian translations.">
+<meta name="application-name" content="Georgian Transliterator">
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16140f" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ქართ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Georgian Transliterator">
+<meta property="og:description" content="Latin or Cyrillic → ქართული · English · Русский. Works fully offline.">
+<meta property="og:image" content="icons/icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f0ede6; --text:#1d1b18; --muted:#6b665d;
+  --border:#e2ddd2; --accent:#b3261e; --accent-soft:#f6e3e1; --ok:#2e6b3a; --warn:#a65d00;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);
+  --geo-font:"Noto Sans Georgian","Noto Serif Georgian","BPG Arial","BPG Glaho","Sylfaen","DejaVu Sans",system-ui,sans-serif;
+  --ui-font:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#16140f; --surface:#1f1c17; --surface-2:#29251e; --text:#ece7dd; --muted:#a39c8f;
+    --border:#38332a; --accent:#ef6b61; --accent-soft:#3a1f1c; --ok:#7cc48a; --warn:#e3a650;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16140f; --surface:#1f1c17; --surface-2:#29251e; --text:#ece7dd; --muted:#a39c8f;
+  --border:#38332a; --accent:#ef6b61; --accent-soft:#3a1f1c; --ok:#7cc48a; --warn:#e3a650;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 var(--ui-font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+h1 .geo{font-family:var(--geo-font);color:var(--accent);font-weight:600;margin-right:6px}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px}
+.tabs button{border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:7px;font:inherit;font-size:14px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+.input-card{padding:12px}
+textarea{width:100%;min-height:110px;resize:vertical;border:0;outline:none;background:transparent;color:var(--text);font:17px/1.55 var(--ui-font);padding:4px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--border);padding-top:10px;margin-top:6px}
+select{max-width:100%;min-width:0}
+select,.btn{font:inherit;font-size:13px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+.btn:hover,select:hover{border-color:var(--muted)}
+.spacer{flex:1}
+.badge{font-size:12px;color:var(--muted)}
+.examples{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 16px}
+.chip{font-size:13px;border:1px dashed var(--border);background:transparent;color:var(--muted);border-radius:999px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.chip:hover{color:var(--text);border-color:var(--muted)}
+.outputs{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:860px){.outputs{grid-template-columns:1.2fr 1fr 1fr}}
+.out{padding:12px 14px;display:flex;flex-direction:column;min-height:150px}
+.out-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.out-head .lbl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.copy{font-size:12px;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:6px}
+.copy:hover{background:var(--surface-2);color:var(--text)}
+.geo-out{font-family:var(--geo-font);font-size:22px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
+.roman{font-size:13px;color:var(--muted);margin-top:8px;white-space:pre-wrap;border-top:1px dashed var(--border);padding-top:6px}
+.tr-out{font-size:17px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.w{border-radius:4px;padding:0 1px}
+.w.unk{text-decoration:underline dotted var(--warn);text-underline-offset:5px}
+.w.alt{text-decoration:underline solid var(--accent);text-underline-offset:5px;cursor:pointer}
+.w.alt:hover,.w.alt:focus{background:var(--accent-soft);outline:none}
+.w.ph{background:var(--surface-2)}
+.empty{color:var(--muted);font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:14px}
+.legend span b{font-weight:normal;padding:0 2px}
+.legend .l-unk{text-decoration:underline dotted var(--warn);text-underline-offset:4px}
+.legend .l-alt{text-decoration:underline solid var(--accent);text-underline-offset:4px}
+.legend .l-ph{background:var(--surface-2);border-radius:3px}
+#tip{position:fixed;z-index:10;pointer-events:none;background:var(--text);color:var(--bg);font-size:13px;padding:6px 9px;border-radius:7px;max-width:280px;opacity:0;transition:opacity .1s}
+#tip .g{font-family:var(--geo-font);font-size:15px}
+.note{font-size:12.5px;color:var(--muted);margin-top:18px;line-height:1.55}
+.panel[hidden]{display:none}
+.dict-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.dict-bar input{flex:1;min-width:200px;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--surface-2);position:sticky;top:0}
+td.g{font-family:var(--geo-font);font-size:17px;white-space:nowrap}
+td.r{color:var(--muted);white-space:nowrap}
+td.t{color:var(--muted);font-size:12px}
+.dict-scroll{max-height:65vh;overflow:auto;border-radius:12px}
+.alpha{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.letter{padding:10px 12px}
+.letter .big{font-family:var(--geo-font);font-size:30px;line-height:1.1}
+.letter .rows{font-size:12.5px;color:var(--muted);margin-top:4px}
+.letter .rows b{color:var(--text);font-weight:600}
+.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0 4px}
+.theme-btn{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:13px}
+#updateBar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center;background:var(--text);color:var(--bg);padding:8px 10px 8px 14px;border-radius:10px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.2);max-width:calc(100vw - 32px)}
+#updateBar[hidden]{display:none}
+#updateBar button{font:inherit;font-size:13px;border:0;border-radius:7px;padding:5px 10px;cursor:pointer;background:var(--accent);color:#fff}
+#installBtn[hidden]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="geo">ქართ</span>Georgian Transliterator</h1>
+      <div class="sub">Latin or Cyrillic transliteration → ქართული · English · Русский — runs entirely offline</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="translate" aria-selected="true">Translate</button>
+        <button role="tab" data-tab="dict" aria-selected="false">Dictionary</button>
+        <button role="tab" data-tab="alpha" aria-selected="false">Alphabet</button>
+      </div>
+      <button class="theme-btn" id="installBtn" title="Install as an app" hidden>Install</button>
+      <button class="theme-btn" id="themeBtn" title="Toggle light/dark">Theme</button>
+    </div>
+  </header>
+
+  <section class="panel" id="p-translate">
+    <div class="card input-card">
+      <textarea id="src" spellcheck="false" autocomplete="off" placeholder="Type Georgian in Latin letters, e.g.  gamarjoba! rogor xar? me miqvars saqartvelo"></textarea>
+      <div class="controls">
+        <label class="badge" for="mode">Input style</label>
+        <select id="mode">
+          <option value="auto">Auto-detect</option>
+          <option value="informal">Chat (q=ქ, x=ხ, w=წ)</option>
+          <option value="national">National (k'=კ, t'=ტ)</option>
+          <option value="keyboard">Keyboard (T=თ, S=შ, C=ჩ)</option>
+          <option value="cyrillic">Cyrillic (гамарджоба)</option>
+        </select>
+        <span class="badge" id="status"></span>
+        <span class="spacer"></span>
+        <button class="btn" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div class="examples" id="examples"></div>
+
+    <div class="outputs">
+      <div class="card out">
+        <div class="out-head"><span class="lbl">ქართული</span><button class="copy" data-copy="geo">Copy</button></div>
+        <div class="geo-out" id="outGeo"></div>
+        <div class="roman" id="outRoman"></div>
+      </div>
+      <div class="card out">
+        <div class="out-head"><span class="lbl">English</span><button class="copy" data-copy="en">Copy</button></div>
+        <div class="tr-out" id="outEn"></div>
+      </div>
+      <div class="card out">
+        <div class="out-head"><span class="lbl">Русский</span><button class="copy" data-copy="ru">Copy</button></div>
+        <div class="tr-out" id="outRu"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><b class="l-alt">word</b> other spellings possible — click to switch</span>
+      <span><b class="l-unk">word</b> not in dictionary — letters converted, translation left as is</span>
+      <span><b class="l-ph">phrase</b> matched as a set phrase</span>
+      <span>Hover any Georgian word for its meaning</span>
+    </div>
+    <p class="note" id="note"></p>
+  </section>
+
+  <section class="panel" id="p-dict" hidden>
+    <div class="dict-bar">
+      <input id="dictQ" placeholder="Search in any script: saxli, სახლი, house, дом…" autocomplete="off">
+      <span class="badge" id="dictCount"></span>
+    </div>
+    <div class="card dict-scroll">
+      <table><thead><tr><th>ქართული</th><th>Romanized</th><th>English</th><th>Русский</th><th>Type</th></tr></thead><tbody id="dictBody"></tbody></table>
+    </div>
+  </section>
+
+  <section class="panel" id="p-alpha" hidden>
+    <p class="note" style="margin-top:0">How each letter is usually typed. In chat-style Latin, ambiguous letters (t → თ/ტ, k → კ/ქ/ყ, p → პ/ფ, ts → ც/წ, ch → ჩ/ჭ) are resolved with the built-in dictionary; unknown words fall back to the most common choice.</p>
+    <div class="alpha" id="alphaGrid"></div>
+  </section>
+</div>
+<div id="tip"></div>
+<div id="updateBar" role="status" hidden><span>A new version is available.</span><button id="updateBtn">Reload</button></div>
+
+<script id="lexicon" type="text/plain">
+# georgian|english|russian|type   (types: n noun, h human noun, a adjective, poss possessive, dem demonstrative, p pronoun, v verb, vt verb taking object, q question word, c conjunction, neg negation, x other, num:N number)
+# --- greetings & set words
+გამარჯობა|hello|здравствуйте|x
+გაგიმარჯოს|hello (reply)|здравствуй|x
+მადლობა|thank you|спасибо|x
+გმადლობთ|thank you|благодарю вас|x
+არაფრის|you're welcome|не за что|x
+ბოდიში|sorry|извините|x
+უკაცრავად|excuse me|простите|x
+ნახვამდის|goodbye|до свидания|x
+კი|yes|да|x
+დიახ|yes|да|x
+ჰო|yes|да|x
+ხო|yeah|ага|x
+არა|no|нет|x
+კარგი|good|хороший|a
+გაუმარჯოს|cheers|за здоровье|x
+გილოცავ|congratulations|поздравляю|x
+გილოცავთ|congratulations|поздравляю вас|x
+გენაცვალე|my dear|дорогой мой|x
+ბატონო|sir|сударь|x
+ქალბატონო|madam|сударыня|x
+ძმაო|bro|брат|x
+აბა|well|ну|x
+ვაიმე|oh my|ой|x
+რაო|what|что|x
+ხომ|right|ведь|x
+წარმატებები|good luck|удачи|x
+მიშველეთ|help|помогите|x
+# --- pronouns
+მე|I|я|p
+შენ|you|ты|p
+ის|he/she|он/она|p
+ჩვენ|we|мы|p
+თქვენ|you|вы|p
+ისინი|they|они|p
+მან|he/she|он/она|p
+მას|him/her|ему/ей|p
+მათ|them|им|p
+ჩემთვის|for me|для меня|x
+შენთვის|for you|для тебя|x
+მისთვის|for him/her|для него|x
+ჩვენთვის|for us|для нас|x
+თქვენთვის|for you|для вас|x
+ჩემთან|with me|со мной|x
+შენთან|with you|с тобой|x
+ჩვენთან|at our place|у нас|x
+ვინმე|anyone|кто-нибудь|x
+რამე|anything|что-нибудь|x
+ყველა|everyone|все|x
+ყველაფერი|everything|всё|x
+არაფერი|nothing|ничего|x
+არავინ|nobody|никто|x
+ვიღაც|somebody|кто-то|x
+რაღაც|something|что-то|x
+ჩემი|my|мой|poss
+შენი|your|твой|poss
+მისი|his/her|его|poss
+ჩვენი|our|наш|poss
+თქვენი|your|ваш|poss
+მათი|their|их|poss
+თავისი|own|свой|poss
+ეს|this|этот|dem
+ეგ|that|этот|dem
+ამ|this|этот|dem
+იმ|that|тот|dem
+# --- question words
+რა|what|что|q
+რას|what|что|q
+ვინ|who|кто|q
+ვის|whom|кого|q
+ვისი|whose|чей|q
+სად|where|где|q
+საით|which way|куда|q
+როდის|when|когда|q
+რატომ|why|почему|q
+როგორ|how|как|q
+რამდენი|how many|сколько|q
+რომელი|which|который|q
+საიდან|where from|откуда|q
+რისთვის|what for|зачем|q
+# --- conjunctions, particles
+და|and|и|c
+მაგრამ|but|но|c
+ან|or|или|c
+თუ|if|если|c
+რომ|that|что|c
+როცა|when|когда|c
+როდესაც|when|когда|c
+რადგან|because|потому что|c
+იმიტომ|because|потому что|c
+თორემ|otherwise|иначе|c
+არ|not|не|neg
+ვერ|cannot|не может|neg
+ნუ|don't|не|neg
+# --- adverbs
+უკვე|already|уже|x
+ჯერ|yet|ещё|x
+ჯერ კიდევ|still|всё ещё|x
+კიდევ|more|ещё|x
+ისევ|again|снова|x
+ძალიან|very|очень|x
+ცოტა|a little|немного|x
+ბევრი|a lot|много|x
+ყოველთვის|always|всегда|x
+არასდროს|never|никогда|x
+ხანდახან|sometimes|иногда|x
+ახლა|now|сейчас|x
+მერე|later|потом|x
+შემდეგ|after|после|x
+დღეს|today|сегодня|x
+ხვალ|tomorrow|завтра|x
+გუშინ|yesterday|вчера|x
+ზეგ|the day after tomorrow|послезавтра|x
+აქ|here|здесь|x
+იქ|there|там|x
+აქეთ|this way|сюда|x
+ახლოს|near|близко|x
+შორს|far|далеко|x
+მარცხნივ|to the left|налево|x
+მარჯვნივ|to the right|направо|x
+პირდაპირ|straight ahead|прямо|x
+ზემოთ|up|наверху|x
+ქვემოთ|down|внизу|x
+შიგნით|inside|внутри|x
+გარეთ|outside|снаружи|x
+ერთად|together|вместе|x
+მარტო|alone|один|x
+მხოლოდ|only|только|x
+ასევე|also|также|x
+თან|also|тоже|x
+კარგად|well|хорошо|x
+ცუდად|badly|плохо|x
+ნელა|slowly|медленно|x
+სწრაფად|quickly|быстро|x
+მალე|soon|скоро|x
+გვიან|late|поздно|x
+ადრე|early|рано|x
+ალბათ|probably|наверное|x
+მართლა|really|правда|x
+თითქმის|almost|почти|x
+ზუსტად|exactly|точно|x
+ასე|like this|так|x
+ისე|so|так|x
+მაინც|anyway|всё равно|x
+აუცილებლად|definitely|обязательно|x
+უბრალოდ|just|просто|x
+შეიძლება|maybe|можно|x
+საჭიროა|it is necessary|нужно|x
+უნდა|must|надо|x
+ავად|sick|болен|x
+მზად|ready|готов|x
+ქართულად|in Georgian|по-грузински|x
+ინგლისურად|in English|по-английски|x
+რუსულად|in Russian|по-русски|x
+გარდა|except|кроме|x
+წინ|in front|впереди|x
+უკან|back|назад|x
+შორის|between|между|x
+გამო|because of|из-за|x
+შესახებ|about|о|x
+გარეშე|without|без|x
+დაახლოებით|approximately|примерно|x
+# --- people
+ადამიანი|person|человек|h
+კაცი|man|мужчина|h
+ქალი|woman|женщина|h
+ბავშვი|child|ребёнок|h
+ბიჭი|boy|мальчик|h
+გოგო|girl|девушка|h
+გოგონა|girl|девочка|h
+დედა|mother|мама|h
+მამა|father|папа|h
+ძმა|brother|брат|h
+ოჯახი|family|семья|n
+მეგობარი|friend|друг|h
+შვილი|child|ребёнок|h
+ვაჟი|son|сын|h
+ქალიშვილი|daughter|дочь|h
+ბებია|grandmother|бабушка|h
+ბაბუა|grandfather|дедушка|h
+ქმარი|husband|муж|h
+ცოლი|wife|жена|h
+ბიძა|uncle|дядя|h
+დეიდა|aunt|тётя|h
+მამიდა|aunt|тётя|h
+სტუმარი|guest|гость|h
+მასპინძელი|host|хозяин|h
+მეზობელი|neighbour|сосед|h
+ბატონი|Mr.|господин|h
+ქალბატონი|Mrs.|госпожа|h
+ხალხი|people|народ|n
+ექიმი|doctor|врач|h
+მასწავლებელი|teacher|учитель|h
+სტუდენტი|student|студент|h
+მოსწავლე|pupil|ученик|h
+მძღოლი|driver|водитель|h
+უფროსი|boss|начальник|h
+ქართველი|Georgian|грузин|h
+რუსი|Russian|русский|h
+ამერიკელი|American|американец|h
+ინგლისელი|Englishman|англичанин|h
+უცხოელი|foreigner|иностранец|h
+ტურისტი|tourist|турист|h
+თამადა|toastmaster|тамада|h
+პოლიცია|police|полиция|n
+# --- home & city
+სახლი|house|дом|n
+ბინა|apartment|квартира|n
+ოთახი|room|комната|n
+კარი|door|дверь|n
+ფანჯარა|window|окно|n
+მაგიდა|table|стол|n
+სკამი|chair|стул|n
+საწოლი|bed|кровать|n
+სამზარეულო|kitchen|кухня|n
+აბაზანა|bathroom|ванная|n
+ტუალეტი|toilet|туалет|n
+ქალაქი|city|город|n
+დედაქალაქი|capital|столица|n
+სოფელი|village|деревня|n
+ქუჩა|street|улица|n
+გზა|road|дорога|n
+ქვეყანა|country|страна|n
+მსოფლიო|world|мир|n
+ზღვა|sea|море|n
+მთა|mountain|гора|n
+მდინარე|river|река|n
+ტბა|lake|озеро|n
+ტყე|forest|лес|n
+მინდორი|field|поле|n
+ბაღი|garden|сад|n
+პარკი|park|парк|n
+ხიდი|bridge|мост|n
+მოედანი|square|площадь|n
+ცენტრი|centre|центр|n
+სკოლა|school|школа|n
+უნივერსიტეტი|university|университет|n
+საავადმყოფო|hospital|больница|n
+აფთიაქი|pharmacy|аптека|n
+მაღაზია|shop|магазин|n
+ბაზარი|market|рынок|n
+რესტორანი|restaurant|ресторан|n
+კაფე|cafe|кафе|n
+სასტუმრო|hotel|гостиница|n
+ბანკი|bank|банк|n
+ეკლესია|church|церковь|n
+ტაძარი|cathedral|храм|n
+მონასტერი|monastery|монастырь|n
+ციხე|fortress|крепость|n
+მუზეუმი|museum|музей|n
+თეატრი|theatre|театр|n
+აეროპორტი|airport|аэропорт|n
+სადგური|station|вокзал|n
+გაჩერება|stop|остановка|n
+მეტრო|metro|метро|n
+ავტობუსი|bus|автобус|n
+მარშრუტკა|minibus|маршрутка|n
+მანქანა|car|машина|n
+ტაქსი|taxi|такси|n
+მატარებელი|train|поезд|n
+თვითმფრინავი|airplane|самолёт|n
+ბილეთი|ticket|билет|n
+პასპორტი|passport|паспорт|n
+ფული|money|деньги|n
+ლარი|lari|лари|n
+თეთრი|white|белый|a
+ფასი|price|цена|n
+სამსახური|job|работа|n
+სამუშაო|work|работа|n
+ოფისი|office|офис|n
+წიგნი|book|книга|n
+წერილი|letter|письмо|n
+ტელეფონი|phone|телефон|n
+კომპიუტერი|computer|компьютер|n
+ინტერნეტი|internet|интернет|n
+ენა|language|язык|n
+სიტყვა|word|слово|n
+სახელი|name|имя|n
+გვარი|surname|фамилия|n
+მისამართი|address|адрес|n
+ნომერი|number|номер|n
+კითხვა|question|вопрос|n
+პასუხი|answer|ответ|n
+ამბავი|story|история|n
+სიმართლე|truth|правда|n
+სიცოცხლე|life|жизнь|n
+ცხოვრება|life|жизнь|n
+სიყვარული|love|любовь|n
+ბედნიერება|happiness|счастье|n
+ჯანმრთელობა|health|здоровье|n
+მშვიდობა|peace|мир|n
+ომი|war|война|n
+ღმერთი|God|Бог|n
+გული|heart|сердце|n
+თავი|head|голова|n
+ხელი|hand|рука|n
+ფეხი|leg|нога|n
+თვალი|eye|глаз|n
+ყური|ear|ухо|n
+პირი|mouth|рот|n
+ცხვირი|nose|нос|n
+თმა|hair|волосы|n
+სახე|face|лицо|n
+კბილი|tooth|зуб|n
+ტანსაცმელი|clothes|одежда|n
+ფეხსაცმელი|shoes|обувь|n
+ჩანთა|bag|сумка|n
+გასაღები|key|ключ|n
+სათვალე|glasses|очки|n
+მუსიკა|music|музыка|n
+სიმღერა|song|песня|n
+ცეკვა|dance|танец|n
+ფილმი|film|фильм|n
+თამაში|game|игра|n
+სპორტი|sport|спорт|n
+ფეხბურთი|football|футбол|n
+სურათი|picture|картина|n
+ფოტო|photo|фото|n
+ხელოვნება|art|искусство|n
+ისტორია|history|история|n
+კულტურა|culture|культура|n
+ტრადიცია|tradition|традиция|n
+საჩუქარი|gift|подарок|n
+დღესასწაული|holiday|праздник|n
+შვებულება|vacation|отпуск|n
+მოგზაურობა|trip|путешествие|n
+რუკა|map|карта|n
+მხარე|side|сторона|n
+ადგილი|place|место|n
+წამალი|medicine|лекарство|n
+ტკივილი|pain|боль|n
+დახმარება|help|помощь|n
+პრობლემა|problem|проблема|n
+შეცდომა|mistake|ошибка|n
+იდეა|idea|идея|n
+აზრი|opinion|мнение|n
+საქმე|matter|дело|n
+ნაწილი|part|часть|n
+ბოლო|end|конец|n
+დასაწყისი|beginning|начало|n
+ღიმილი|smile|улыбка|n
+ხმა|voice|голос|n
+ძილი|sleep|сон|n
+სიზმარი|dream|сон|n
+ოცნება|dream|мечта|n
+იმედი|hope|надежда|n
+სამშობლო|homeland|родина|n
+ღირსშესანიშნაობა|sight|достопримечательность|n
+# --- food & drink
+წყალი|water|вода|n
+პური|bread|хлеб|n
+ღვინო|wine|вино|n
+ლუდი|beer|пиво|n
+ყავა|coffee|кофе|n
+ჩაი|tea|чай|n
+რძე|milk|молоко|n
+ყველი|cheese|сыр|n
+ხორცი|meat|мясо|n
+თევზი|fish|рыба|n
+ქათამი|chicken|курица|n
+კვერცხი|egg|яйцо|n
+ხილი|fruit|фрукты|n
+ბოსტნეული|vegetables|овощи|n
+ვაშლი|apple|яблоко|n
+ყურძენი|grapes|виноград|n
+პომიდორი|tomato|помидор|n
+კიტრი|cucumber|огурец|n
+კარტოფილი|potato|картофель|n
+ხახვი|onion|лук|n
+ნიორი|garlic|чеснок|n
+მარილი|salt|соль|n
+შაქარი|sugar|сахар|n
+თაფლი|honey|мёд|n
+წვენი|juice|сок|n
+საუზმე|breakfast|завтрак|n
+სადილი|lunch|обед|n
+ვახშამი|dinner|ужин|n
+საჭმელი|food|еда|n
+ხაჭაპური|khachapuri|хачапури|n
+ხინკალი|khinkali|хинкали|n
+მწვადი|barbecue|шашлык|n
+ჭაჭა|chacha|чача|n
+ჩურჩხელა|churchkhela|чурчхела|n
+ლობიო|beans|лобио|n
+ტკბილეული|sweets|сладости|n
+სუფრა|feast|застолье|n
+სადღეგრძელო|toast|тост|n
+ანგარიში|bill|счёт|n
+მენიუ|menu|меню|n
+ჭიქა|glass|стакан|n
+თეფში|plate|тарелка|n
+დანა|knife|нож|n
+ჩანგალი|fork|вилка|n
+კოვზი|spoon|ложка|n
+# --- time & nature
+დრო|time|время|n
+დღე|day|день|n
+ღამე|night|ночь|n
+დილა|morning|утро|n
+საღამო|evening|вечер|n
+კვირა|week|неделя|n
+თვე|month|месяц|n
+წელი|year|год|n
+საათი|hour|час|n
+წუთი|minute|минута|n
+წამი|second|секунда|n
+ზაფხული|summer|лето|n
+ზამთარი|winter|зима|n
+გაზაფხული|spring|весна|n
+შემოდგომა|autumn|осень|n
+ამინდი|weather|погода|n
+მზე|sun|солнце|n
+მთვარე|moon|луна|n
+ვარსკვლავი|star|звезда|n
+ცა|sky|небо|n
+წვიმა|rain|дождь|n
+თოვლი|snow|снег|n
+ქარი|wind|ветер|n
+ცეცხლი|fire|огонь|n
+მიწა|ground|земля|n
+ქვა|stone|камень|n
+ხე|tree|дерево|n
+ყვავილი|flower|цветок|n
+ძაღლი|dog|собака|n
+კატა|cat|кошка|n
+ცხენი|horse|лошадь|n
+ძროხა|cow|корова|n
+ცხვარი|sheep|овца|n
+ფრინველი|bird|птица|n
+ღორი|pig|свинья|n
+ორშაბათი|Monday|понедельник|n
+სამშაბათი|Tuesday|вторник|n
+ოთხშაბათი|Wednesday|среда|n
+ხუთშაბათი|Thursday|четверг|n
+პარასკევი|Friday|пятница|n
+შაბათი|Saturday|суббота|n
+იანვარი|January|январь|n
+თებერვალი|February|февраль|n
+მარტი|March|март|n
+აპრილი|April|апрель|n
+მაისი|May|май|n
+ივნისი|June|июнь|n
+ივლისი|July|июль|n
+აგვისტო|August|август|n
+სექტემბერი|September|сентябрь|n
+ოქტომბერი|October|октябрь|n
+ნოემბერი|November|ноябрь|n
+დეკემბერი|December|декабрь|n
+# --- places
+საქართველო|Georgia|Грузия|n
+თბილისი|Tbilisi|Тбилиси|n
+ბათუმი|Batumi|Батуми|n
+ქუთაისი|Kutaisi|Кутаиси|n
+მცხეთა|Mtskheta|Мцхета|n
+კახეთი|Kakheti|Кахетия|n
+სვანეთი|Svaneti|Сванетия|n
+რუსეთი|Russia|Россия|n
+ამერიკა|America|Америка|n
+ინგლისი|England|Англия|n
+ესტონეთი|Estonia|Эстония|n
+ევროპა|Europe|Европа|n
+გერმანია|Germany|Германия|n
+საფრანგეთი|France|Франция|n
+თურქეთი|Turkey|Турция|n
+სომხეთი|Armenia|Армения|n
+აზერბაიჯანი|Azerbaijan|Азербайджан|n
+უკრაინა|Ukraine|Украина|n
+იტალია|Italy|Италия|n
+ესპანეთი|Spain|Испания|n
+ისრაელი|Israel|Израиль|n
+ჩინეთი|China|Китай|n
+იაპონია|Japan|Япония|n
+# --- adjectives
+ცუდი|bad|плохой|a
+დიდი|big|большой|a
+პატარა|small|маленький|a
+ლამაზი|beautiful|красивый|a
+ახალი|new|новый|a
+ძველი|old|старый|a
+ახალგაზრდა|young|молодой|a
+მოხუცი|elderly|пожилой|a
+ცხელი|hot|горячий|a
+ცივი|cold|холодный|a
+თბილი|warm|тёплый|a
+გემრიელი|tasty|вкусный|a
+ტკბილი|sweet|сладкий|a
+მწარე|bitter|горький|a
+მჟავე|sour|кислый|a
+ცხარე|spicy|острый|a
+ძვირი|expensive|дорогой|a
+იაფი|cheap|дешёвый|a
+სწრაფი|fast|быстрый|a
+ნელი|slow|медленный|a
+ადვილი|easy|лёгкий|a
+რთული|difficult|трудный|a
+მარტივი|simple|простой|a
+ჭკვიანი|smart|умный|a
+სულელი|stupid|глупый|a
+კეთილი|kind|добрый|a
+ბედნიერი|happy|счастливый|a
+მოწყენილი|sad|грустный|a
+დაღლილი|tired|усталый|a
+მშიერი|hungry|голодный|a
+ჯანმრთელი|healthy|здоровый|a
+მაღალი|tall|высокий|a
+დაბალი|low|низкий|a
+გრძელი|long|длинный|a
+მოკლე|short|короткий|a
+მსუქანი|fat|толстый|a
+გამხდარი|thin|худой|a
+ძლიერი|strong|сильный|a
+სუსტი|weak|слабый|a
+მდიდარი|rich|богатый|a
+ღარიბი|poor|бедный|a
+სუფთა|clean|чистый|a
+ბინძური|dirty|грязный|a
+ცარიელი|empty|пустой|a
+სავსე|full|полный|a
+ღია|open|открытый|a
+დახურული|closed|закрытый|a
+მართალი|true|верный|a
+მნიშვნელოვანი|important|важный|a
+საინტერესო|interesting|интересный|a
+სასიამოვნო|pleasant|приятный|a
+მშვენიერი|wonderful|прекрасный|a
+საუკეთესო|best|лучший|a
+პირველი|first|первый|a
+მეორე|second|второй|a
+მესამე|third|третий|a
+მთელი|whole|целый|a
+სხვა|other|другой|a
+ცოცხალი|alive|живой|a
+მკვდარი|dead|мёртвый|a
+შავი|black|чёрный|a
+წითელი|red|красный|a
+მწვანე|green|зелёный|a
+ლურჯი|blue|синий|a
+ყვითელი|yellow|жёлтый|a
+ცისფერი|light blue|голубой|a
+ვარდისფერი|pink|розовый|a
+ნაცრისფერი|grey|серый|a
+ყავისფერი|brown|коричневый|a
+საყვარელი|lovely|любимый|a
+ძვირფასი|dear|дорогой|a
+ქართული|Georgian|грузинский|a
+ინგლისური|English|английский|a
+რუსული|Russian|русский|a
+უცხო|foreign|иностранный|a
+ადგილობრივი|local|местный|a
+ცნობილი|famous|известный|a
+დაკავებული|busy|занятый|a
+თავისუფალი|free|свободный|a
+უფასო|free of charge|бесплатный|a
+ავადმყოფი|sick|больной|a
+# --- numbers
+ერთი|one|один|num:1
+ორი|two|два|num:2
+სამი|three|три|num:3
+ოთხი|four|четыре|num:4
+ხუთი|five|пять|num:5
+ექვსი|six|шесть|num:6
+შვიდი|seven|семь|num:7
+რვა|eight|восемь|num:8
+ცხრა|nine|девять|num:9
+ათი|ten|десять|num:10
+თერთმეტი|eleven|одиннадцать|num:11
+თორმეტი|twelve|двенадцать|num:12
+ცამეტი|thirteen|тринадцать|num:13
+თოთხმეტი|fourteen|четырнадцать|num:14
+თხუთმეტი|fifteen|пятнадцать|num:15
+თექვსმეტი|sixteen|шестнадцать|num:16
+ჩვიდმეტი|seventeen|семнадцать|num:17
+თვრამეტი|eighteen|восемнадцать|num:18
+ცხრამეტი|nineteen|девятнадцать|num:19
+ოცი|twenty|двадцать|num:20
+ოცდაათი|thirty|тридцать|num:30
+ორმოცი|forty|сорок|num:40
+ორმოცდაათი|fifty|пятьдесят|num:50
+სამოცი|sixty|шестьдесят|num:60
+სამოცდაათი|seventy|семьдесят|num:70
+ოთხმოცი|eighty|восемьдесят|num:80
+ოთხმოცდაათი|ninety|девяносто|num:90
+ასი|hundred|сто|num:100
+ათასი|thousand|тысяча|num:1000
+მილიონი|million|миллион|num:1000000
+# --- verbs: to be
+ვარ|I am|я|v
+ხარ|you are|ты|v
+არის|is||v
+ვართ|we are|мы|v
+ხართ|you are|вы|v
+არიან|they are|они|v
+იყო|was|был|v
+ვიყავი|I was|я был|v
+იყავი|you were|ты был|v
+იქნება|will be|будет|v
+ვიქნები|I will be|я буду|v
+# --- have
+მაქვს|I have|у меня есть|v
+გაქვს|you have|у тебя есть|v
+აქვს|has|у него есть|v
+გვაქვს|we have|у нас есть|v
+გაქვთ|you have|у вас есть|v
+აქვთ|they have|у них есть|v
+# --- want / love / like / know
+მინდა|I want|я хочу|vt
+გინდა|you want|ты хочешь|vt
+გვინდა|we want|мы хотим|vt
+გინდათ|you want|вы хотите|vt
+უნდათ|they want|они хотят|vt
+მიყვარს|I love|я люблю|vt
+გიყვარს|you love|ты любишь|vt
+უყვარს|loves|любит|vt
+გვიყვარს|we love|мы любим|vt
+მიყვარხარ|I love you|я тебя люблю|v
+მიყვარხართ|I love you|я вас люблю|v
+მომწონს|I like|мне нравится|v
+მოგწონს|you like|тебе нравится|v
+მოსწონს|likes|нравится|v
+მომწონხარ|I like you|ты мне нравишься|v
+ვიცი|I know|я знаю|vt
+იცი|you know|ты знаешь|vt
+იცის|knows|знает|vt
+ვიცით|we know|мы знаем|vt
+იცით|you know|вы знаете|vt
+იციან|they know|они знают|vt
+ვიცნობ|I know|я знаю|vt
+იცნობ|you know|ты знаешь|vt
+მესმის|I understand|я понимаю|v
+გესმის|you understand|ты понимаешь|v
+ესმის|understands|понимает|v
+გვესმის|we understand|мы понимаем|v
+გავიგე|I understood|я понял|v
+გაიგე|you understood|ты понял|v
+მქვია|my name is|меня зовут|v
+გქვია|your name is|тебя зовут|v
+ჰქვია|is called|зовут|v
+# --- speak / live / work / study
+ვლაპარაკობ|I speak|я говорю|v
+ლაპარაკობ|you speak|ты говоришь|v
+ლაპარაკობს|speaks|говорит|v
+ვლაპარაკობთ|we speak|мы говорим|v
+ლაპარაკობთ|you speak|вы говорите|v
+ვსაუბრობ|I talk|я разговариваю|v
+ვცხოვრობ|I live|я живу|v
+ცხოვრობ|you live|ты живёшь|v
+ცხოვრობს|lives|живёт|v
+ვცხოვრობთ|we live|мы живём|v
+ცხოვრობთ|you live|вы живёте|v
+ცხოვრობენ|they live|они живут|v
+ვმუშაობ|I work|я работаю|v
+მუშაობ|you work|ты работаешь|v
+მუშაობს|works|работает|v
+ვმუშაობთ|we work|мы работаем|v
+ვსწავლობ|I study|я учусь|v
+სწავლობ|you study|ты учишься|v
+სწავლობს|studies|учится|v
+# --- go / come
+მივდივარ|I am going|я иду|v
+მიდიხარ|you are going|ты идёшь|v
+მიდის|goes|идёт|v
+მივდივართ|we are going|мы идём|v
+მიდიხართ|you are going|вы идёте|v
+მიდიან|they are going|они идут|v
+მოვდივარ|I am coming|я иду|v
+მოდიხარ|you are coming|ты идёшь|v
+მოდის|comes|идёт|v
+მოდიან|they are coming|они идут|v
+მოდი|come|иди сюда|v
+წადი|go|иди|v
+წავიდეთ|let's go|пойдём|v
+წავედი|I went|я ушёл|v
+წავიდა|left|ушёл|v
+მოვედი|I came|я пришёл|v
+მოხვედი|you came|ты пришёл|v
+მოვიდა|came|пришёл|v
+მოვა|will come|придёт|v
+ჩამოდი|come over|приезжай|v
+ჩამოვალ|I will come|я приеду|v
+ჩამოვდივარ|I am coming|я приезжаю|v
+# --- eat / drink / do / see
+ვჭამ|I eat|я ем|v
+ჭამ|you eat|ты ешь|v
+ჭამს|eats|ест|v
+ვჭამე|I ate|я поел|v
+ჭამე|eat|ешь|v
+ვსვამ|I drink|я пью|v
+სვამ|you drink|ты пьёшь|v
+სვამს|drinks|пьёт|v
+დავლიე|I drank|я выпил|v
+დალიე|drink|пей|v
+ვაკეთებ|I do|я делаю|v
+აკეთებ|you do|ты делаешь|v
+აკეთებს|does|делает|v
+ვხედავ|I see|я вижу|v
+ხედავ|you see|ты видишь|v
+ხედავს|sees|видит|v
+ვნახე|I saw|я видел|v
+ნახე|look|посмотри|v
+ვფიქრობ|I think|я думаю|v
+ფიქრობ|you think|ты думаешь|v
+ფიქრობს|thinks|думает|v
+ვეძებ|I am looking for|я ищу|v
+ეძებ|you are looking for|ты ищешь|v
+ეძებს|is looking for|ищет|v
+მჭირდება|I need|мне нужно|v
+გჭირდება|you need|тебе нужно|v
+სჭირდება|needs|нужно|v
+შემიძლია|I can|я могу|v
+შეგიძლია|you can|ты можешь|v
+შეუძლია|can|может|v
+შეგვიძლია|we can|мы можем|v
+შეგიძლიათ|you can|вы можете|v
+# --- feelings & states
+მშია|I am hungry|я голоден|v
+მწყურია|I am thirsty|я хочу пить|v
+მეძინება|I am sleepy|я хочу спать|v
+მძინავს|I am sleeping|я сплю|v
+მცივა|I am cold|мне холодно|v
+მცხელა|I am hot|мне жарко|v
+მტკივა|it hurts|у меня болит|v
+მეშინია|I am afraid|я боюсь|v
+მიხარია|I am glad|я рад|v
+გამიხარდა|I am glad|я рад|v
+მენატრები|I miss you|я скучаю по тебе|v
+მენატრება|I miss|я скучаю по|v
+მეზარება|I don't feel like it|мне лень|v
+ვგრძნობ|I feel|я чувствую|v
+# --- misc verbs
+ვწერ|I write|я пишу|v
+წერს|writes|пишет|v
+ვკითხულობ|I read|я читаю|v
+კითხულობს|reads|читает|v
+დაწერე|write|напиши|v
+მითხარი|tell me|скажи мне|v
+მომეცი|give me|дай мне|v
+მაჩვენე|show me|покажи мне|v
+დამეხმარე|help me|помоги мне|v
+დამეხმარეთ|help me|помогите мне|v
+დამირეკე|call me|позвони мне|v
+მოიცადე|wait|подожди|v
+მოიცა|wait|подожди|v
+გაჩერდი|stop|остановись|v
+გააჩერე|stop here|остановите здесь|v
+მომისმინე|listen to me|послушай меня|v
+დაჯექი|sit down|садись|v
+ადექი|get up|вставай|v
+ვყიდულობ|I buy|я покупаю|v
+ვიყიდე|I bought|я купил|v
+ღირს|costs|стоит|v
+გადავიხდი|I will pay|я заплачу|v
+ვთამაშობ|I play|я играю|v
+ვმღერი|I sing|я пою|v
+ვცეკვავ|I dance|я танцую|v
+ვიცინი|I laugh|я смеюсь|v
+ვტირი|I cry|я плачу|v
+ვიცნობთ|we know|мы знакомы|v
+ველოდები|I am waiting|я жду|v
+გელოდები|I am waiting for you|я жду тебя|v
+ვიღებ|I take|я беру|v
+აიღე|take|возьми|v
+ვზივარ|I am sitting|я сижу|v
+ვდგავარ|I am standing|я стою|v
+დავბრუნდები|I will return|я вернусь|v
+დავბრუნდი|I returned|я вернулся|v
+ვცდილობ|I try|я стараюсь|v
+ვიწყებ|I begin|я начинаю|v
+ვამთავრებ|I finish|я заканчиваю|v
+მოგწერ|I will write to you|я тебе напишу|v
+დაგირეკავ|I will call you|я тебе позвоню|v
+გნახავ|I will see you|я тебя увижу|v
+გასაგებია|understood|понятно|x
+# --- set phrases (matched before word-by-word translation)
+როგორ ხარ|how are you|как дела
+როგორ ხართ|how are you|как у вас дела
+როგორ ბრძანდებით|how are you|как поживаете
+რას შვრები|what are you up to|что делаешь
+რას აკეთებ|what are you doing|что ты делаешь
+რა ხდება|what's up|что происходит
+რა ამბავია|what's going on|что случилось
+კარგად ვარ|I am fine|я в порядке
+ცუდად ვარ|I feel bad|мне плохо
+ავად ვარ|I am sick|я болею
+დიდი მადლობა|thank you very much|большое спасибо
+ძალიან დიდი მადლობა|thank you so much|огромное спасибо
+დილა მშვიდობისა|good morning|доброе утро
+საღამო მშვიდობისა|good evening|добрый вечер
+ღამე მშვიდობისა|good night|спокойной ночи
+ძილი ნებისა|sleep well|спокойной ночи
+კარგად იყავი|take care|всего хорошего
+კარგად იყავით|take care|всего хорошего
+მობრძანდით|welcome|добро пожаловать
+კეთილი იყოს თქვენი მობრძანება|welcome|добро пожаловать
+სასიამოვნოა|nice to meet you|приятно познакомиться
+ძალიან სასიამოვნოა|very nice to meet you|очень приятно
+რა გქვია|what is your name|как тебя зовут
+რა გქვიათ|what is your name|как вас зовут
+მე მქვია|my name is|меня зовут
+ჩემი სახელია|my name is|меня зовут
+საიდან ხარ|where are you from|откуда ты
+საიდან ხართ|where are you from|откуда вы
+რამდენი წლის ხარ|how old are you|сколько тебе лет
+რა ღირს|how much is ~ how much does it cost|сколько стоит
+რამდენი ღირს|how much is it|сколько это стоит
+რა ღირს ეს|how much is this|сколько это стоит
+სად არის|where is|где
+რომელი საათია|what time is it|который час
+არ ვიცი|I don't know|я не знаю
+არ მესმის|I don't understand|я не понимаю
+ვერ გავიგე|I didn't understand|я не понял
+რა თქმა უნდა|of course|конечно
+არა უშავს|it's okay|ничего страшного
+არაუშავს|it's okay|ничего страшного
+არ არის პრობლემა|no problem|без проблем
+რატომაც არა|why not|почему бы и нет
+ყველაფერი კარგადაა|everything is fine|всё хорошо
+ყველაფერი რიგზეა|everything is in order|всё в порядке
+გილოცავ დაბადების დღეს|happy birthday|с днём рождения
+დაბადების დღე|birthday|день рождения
+ახალ წელს გილოცავ|happy New Year|с Новым годом
+ახალ წელს გილოცავთ|happy New Year|с Новым годом
+გემრიელად მიირთვით|bon appétit|приятного аппетита
+ანგარიში მოგვიტანეთ|the bill, please|принесите счёт
+ანგარიში მომიტანეთ|the bill, please|принесите счёт
+თუ შეიძლება|please|пожалуйста
+გთხოვთ|please|пожалуйста
+გთხოვ|please|пожалуйста
+ინგლისური იცით|do you speak English|вы говорите по-английски
+რუსული იცით|do you speak Russian|вы говорите по-русски
+ინგლისურად ლაპარაკობთ|do you speak English|вы говорите по-английски
+რუსულად ლაპარაკობთ|do you speak Russian|вы говорите по-русски
+ექიმი გამოიძახეთ|call a doctor|вызовите врача
+ხვალამდე|see you tomorrow|до завтра
+შეხვედრამდე|see you|до встречи
+მალე გნახავ|see you soon|скоро увидимся
+ღმერთმა დაგლოცოს|God bless you|благослови тебя Бог
+სად მუშაობ|where do you work|где ты работаешь
+რას საქმიანობ|what do you do|чем ты занимаешься
+ხომ არა|isn't it|не так ли
+რა კარგია|how nice|как хорошо
+რა ლამაზია|how beautiful|как красиво
+ძალიან ლამაზია|it's very beautiful|очень красиво
+ძალიან გემრიელია|it's very tasty|очень вкусно
+გემრიელია|it's tasty|вкусно
+ძალიან კარგი|very good|очень хорошо
+ძალიან მიყვარხარ|I love you very much|я тебя очень люблю
+მეც მიყვარხარ|I love you too|я тебя тоже люблю
+მეც|me too|я тоже
+შენც|you too|ты тоже
+კარგი მგზავრობა|have a good trip|счастливого пути
+გამოჯანმრთელდი|get well soon|выздоравливай
+</script>
+
+<script>
+"use strict";
+/* ============================================================
+   ALPHABET TABLES
+   ============================================================ */
+const GEO_LETTERS = 'აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ';
+// "loose" key: collapses letters that are written the same way in casual Latin
+const LOOSE = {ა:'a',ბ:'b',გ:'g',დ:'d',ე:'e',ვ:'v',ზ:'z',თ:'t',ი:'i',კ:'k',ლ:'l',მ:'m',ნ:'n',ო:'o',პ:'p',ჟ:'Z',რ:'r',ს:'s',ტ:'t',უ:'u',ფ:'p',ქ:'k',ღ:'G',ყ:'k',შ:'S',ჩ:'C',ც:'c',ძ:'D',წ:'c',ჭ:'C',ხ:'x',ჯ:'j',ჰ:'h'};
+const NATIONAL = {ა:'a',ბ:'b',გ:'g',დ:'d',ე:'e',ვ:'v',ზ:'z',თ:'t',ი:'i',კ:"k'",ლ:'l',მ:'m',ნ:'n',ო:'o',პ:"p'",ჟ:'zh',რ:'r',ს:'s',ტ:"t'",უ:'u',ფ:'p',ქ:'k',ღ:'gh',ყ:"q'",შ:'sh',ჩ:'ch',ც:'ts',ძ:'dz',წ:"ts'",ჭ:"ch'",ხ:'kh',ჯ:'j',ჰ:'h'};
+const CHAT = {ა:'a',ბ:'b',გ:'g',დ:'d',ე:'e',ვ:'v',ზ:'z',თ:'t',ი:'i',კ:'k',ლ:'l',მ:'m',ნ:'n',ო:'o',პ:'p',ჟ:'zh',რ:'r',ს:'s',ტ:'t',უ:'u',ფ:'f',ქ:'q',ღ:'gh',ყ:'y',შ:'sh',ჩ:'ch',ც:'c / ts',ძ:'dz',წ:'w / ts',ჭ:'ch',ხ:'x / kh',ჯ:'j',ჰ:'h'};
+const KEYB = {ა:'a',ბ:'b',გ:'g',დ:'d',ე:'e',ვ:'v',ზ:'z',თ:'T',ი:'i',კ:'k',ლ:'l',მ:'m',ნ:'n',ო:'o',პ:'p',ჟ:'J',რ:'r',ს:'s',ტ:'t',უ:'u',ფ:'f',ქ:'q',ღ:'R',ყ:'y',შ:'S',ჩ:'C',ც:'c',ძ:'Z',წ:'w',ჭ:'W',ხ:'x',ჯ:'j',ჰ:'h'};
+const CYR = {ა:'а',ბ:'б',გ:'г',დ:'д',ე:'е',ვ:'в',ზ:'з',თ:'т',ი:'и',კ:'к',ლ:'л',მ:'м',ნ:'н',ო:'о',პ:'п',ჟ:'ж',რ:'р',ს:'с',ტ:'т',უ:'у',ფ:'п',ქ:'к',ღ:'г',ყ:'к',შ:'ш',ჩ:'ч',ც:'ц',ძ:'дз',წ:'ц',ჭ:'ч',ხ:'х',ჯ:'дж',ჰ:'х'};
+const isGeoChar = ch => ch >= 'ა' && ch <= 'ჰ';
+const GEO_VOWELS = 'აეიოუ';
+
+// input token tables: token -> list of Georgian options (first = default)
+// Options only differ when they differ in "loose" class; same-class letters are resolved by the dictionary.
+const BASE_LATIN = {
+  a:['ა'],b:['ბ'],c:['ც'],d:['დ'],e:['ე'],f:['ფ'],g:['გ'],h:['ჰ'],i:['ი'],j:['ჯ'],l:['ლ'],m:['მ'],n:['ნ'],o:['ო'],
+  r:['რ'],s:['ს'],u:['უ'],v:['ვ'],x:['ხ'],y:['ყ'],z:['ზ'],w:['წ','შ'],
+  ch:['ჩ'],ts:['ც'],tz:['წ'],tch:['ჭ'],dz:['ძ'],dj:['ჯ'],gh:['ღ'],kh:['ხ'],sh:['შ'],zh:['ჟ'],th:['თ'],ph:['ფ'],
+  "ch'":['ჭ'],"ts'":['წ'],"k'":['კ'],"p'":['პ'],"t'":['ტ'],"q'":['ყ'],"'":[''],'`':[''],'4':['ჩ']
+};
+const INFORMAL = Object.assign({}, BASE_LATIN, {k:['კ'],p:['პ'],t:['თ'],q:['ქ']});
+const NATIONAL_IN = Object.assign({}, BASE_LATIN, {k:['ქ'],p:['ფ'],t:['თ'],q:['ყ'],w:['წ']});
+const KEYBOARD_IN = {q:'ქ',w:'წ',e:'ე',r:'რ',t:'ტ',y:'ყ',u:'უ',i:'ი',o:'ო',p:'პ',a:'ა',s:'ს',d:'დ',f:'ფ',g:'გ',h:'ჰ',j:'ჯ',k:'კ',l:'ლ',z:'ზ',x:'ხ',c:'ც',v:'ვ',b:'ბ',n:'ნ',m:'მ',W:'ჭ',R:'ღ',T:'თ',S:'შ',J:'ჟ',Z:'ძ',C:'ჩ'};
+const KB_SHIFT = {W:'ჭ',R:'ღ',T:'თ',S:'შ',J:'ჟ',Z:'ძ',C:'ჩ'};
+const CYR_IN = {
+  а:['ა'],б:['ბ'],в:['ვ'],г:['გ'],д:['დ'],е:['ე'],ё:['იო'],ж:['ჟ'],з:['ზ'],и:['ი'],й:['ი'],к:['კ'],л:['ლ'],м:['მ'],н:['ნ'],о:['ო'],
+  п:['პ'],р:['რ'],с:['ს'],т:['თ'],у:['უ'],ф:['ფ'],х:['ხ'],ц:['ც'],ч:['ჩ'],ш:['შ'],щ:['შ'],ъ:[''],ы:['ი'],ь:[''],э:['ე'],ю:['იუ'],я:['ია'],
+  дж:['ჯ'],дз:['ძ'],гх:['ღ'],кх:['ხ'],тс:['ც']
+};
+
+/* ============================================================
+   LEXICON
+   ============================================================ */
+const looseOf = g => { let s=''; for (const ch of g) s += LOOSE[ch] || ch; return s; };
+const romanize = g => { let s=''; for (const ch of g) s += NATIONAL[ch] ?? ch; return s; };
+const toCyr = g => { let s=''; for (const ch of g) s += CYR[ch] ?? ch; return s; };
+
+const LEX = [], PHRASES = [];
+const formIdx = new Map(), stemIdx = new Map(), phraseIdx = new Map();
+const push = (m,k,v) => { let a=m.get(k); if(!a){a=[];m.set(k,a);} a.push(v); };
+const DECL = new Set(['n','h','a','poss']);
+
+(function loadLexicon(){
+  const lines = document.getElementById('lexicon').textContent.split('\n');
+  let ord = 0;
+  for (let raw of lines){
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const [g,en,ru,tt] = line.split('|');
+    if (g.includes(' ') || tt === undefined){
+      const words = g.split(' ');
+      const ph = {g, en, ru, words, keys: words.map(looseOf), ord: ord++};
+      PHRASES.push(ph);
+      push(phraseIdx, ph.keys[0], ph);
+      continue;
+    }
+    let t = tt, num = null;
+    if (t.startsWith('num:')){ num = +t.slice(4); t = 'num'; }
+    const e = {g, en, ru, t, num, key: looseOf(g), ord: ord++};
+    LEX.push(e);
+    push(formIdx, e.key, e);
+    if (DECL.has(t)){
+      const last = g.slice(-1), prev = g.slice(-2,-1);
+      let stems;
+      if (last === 'ი' && !GEO_VOWELS.includes(prev)) stems = [g.slice(0,-1)];
+      else if (last === 'ა' || last === 'ე') stems = [g, g.slice(0,-1)];
+      else stems = [g];
+      for (const s of stems) if (s.length >= 2) push(stemIdx, looseOf(s), {e, g: s});
+    }
+  }
+})();
+
+// Case / postposition suffixes (loose key, Georgian spelling, case code, plural)
+const CASES = [
+  ['ისთვის','istvis'],['თვის','istvis'],['ისკენ','isken'],['კენ','isken'],['იდან','idan'],['დან','idan'],
+  ['სთან','tan'],['ამდე','amde'],['მდე','amde'],['ივით','ivit'],['ვით','ivit'],['ში','shi'],['ზე','ze'],['თან','tan'],
+  ['მა','erg'],['მ','erg'],['ის','gen'],['ით','ins'],['ად','adv'],['ს','dat'],['ო','voc'],['ი','nom']
+];
+const SUFFIXES = [];
+for (const [g,c] of CASES){
+  SUFFIXES.push({g, k: looseOf(g), c, pl:false});
+}
+for (const [g,c] of [['ები','nom'],['ებს','dat'],['ებმა','erg'],['ების','gen'],['ებით','ins'],['ებად','adv'],['ებო','voc'],['ებში','shi'],['ებზე','ze'],['ებთან','tan'],['ებიდან','idan'],['ებისთვის','istvis'],['ებისკენ','isken'],['ებივით','ivit'],['ებამდე','amde']]){
+  SUFFIXES.push({g, k: looseOf(g), c, pl:true});
+}
+SUFFIXES.sort((a,b) => b.k.length - a.k.length);
+
+/* ============================================================
+   INPUT PARSING
+   ============================================================ */
+function tokenTable(mode){
+  if (mode === 'national') return NATIONAL_IN;
+  return INFORMAL;
+}
+// Returns up to `limit` parses: {G:[georgian letters], K:'loose'}
+function parseWord(word, mode, limit=24){
+  const out = [], seen = new Set();
+  const cyr = /[Ѐ-ӿ]/.test(word);
+  const src = (mode === 'keyboard') ? word : word;
+  const table = cyr ? CYR_IN : tokenTable(mode);
+  function options(pos){
+    const res = [];
+    const ch = src[pos];
+    if (isGeoChar(ch)) return [{len:1, geo:[ch]}];
+    if (!cyr && mode === 'keyboard'){
+      const g = KEYBOARD_IN[ch] || KEYBOARD_IN[ch.toLowerCase()];
+      if (g) return [{len:1, geo:[g]}];
+      if (ch === "'" || ch === '`') return [{len:1, geo:['']}];
+      return [{len:1, geo:[ch]}];
+    }
+    // auto mode: shifted keyboard letters are possible alternatives
+    if (!cyr && mode === 'auto' && KB_SHIFT[ch]){
+      const low = table[ch.toLowerCase()] || [ch.toLowerCase()];
+      const kb = KB_SHIFT[ch];
+      if (pos === 0) { res.push({len:1, geo:low}); res.push({len:1, geo:[kb]}); }
+      else { res.push({len:1, geo:[kb]}); res.push({len:1, geo:low}); }
+    }
+    const lower = src.toLowerCase();
+    for (const L of [3,2,1]){
+      const piece = lower.substr(pos, L);
+      if (piece.length !== L) continue;
+      const opt = table[piece];
+      if (opt) res.push({len:L, geo:opt});
+    }
+    if (!res.length) res.push({len:1, geo:[src[pos]]});
+    return res;
+  }
+  function rec(pos, G){
+    if (out.length >= limit) return;
+    if (pos >= src.length){
+      const K = G.map(g => LOOSE[g] || g).join('');
+      if (!seen.has(K)){ seen.add(K); out.push({G: G.slice(), K}); }
+      return;
+    }
+    for (const o of options(pos)){
+      for (const g of o.geo){
+        const add = g ? [...g] : [];
+        rec(pos + o.len, G.concat(add));
+        if (out.length >= limit) return;
+      }
+    }
+  }
+  rec(0, []);
+  return out;
+}
+
+function detectMode(text){
+  if (/[Ѐ-ӿ]/.test(text)) return 'cyrillic';
+  const words = text.match(/[A-Za-z']+/g) || [];
+  if (words.length && words.filter(w => /[a-z][WRTSJZC]/.test(w)).length * 2 > words.length) return 'keyboard';
+  if (/[a-zA-Z]'/.test(text)) return 'national';
+  return 'informal';
+}
+
+/* ============================================================
+   DICTIONARY LOOKUP
+   ============================================================ */
+function stemVariants(r){
+  const v = [r];
+  const C = /[^aeiou]/;
+  if (r.length >= 3 && C.test(r.slice(-1)) && C.test(r.slice(-2,-1))){
+    for (const V of 'aeo') v.push(r.slice(0,-1) + V + r.slice(-1));
+  }
+  return v;
+}
+function lookup(K){
+  const res = [];
+  for (const e of (formIdx.get(K) || [])) res.push({e, suf:null, cl:null, stemLen:K.length, ref:e.g, rank:0});
+  if (res.length) return res;
+  if (K.length > 2){
+    for (const cl of ['a','c']){
+      if (K.endsWith(cl)) for (const e of (formIdx.get(K.slice(0,-1)) || []))
+        res.push({e, suf:null, cl, stemLen:K.length-1, ref:e.g, rank:1});
+    }
+    if (res.length) return res;
+  }
+  // truncated adjective / possessive before a noun (ლამაზ ქალს, ჩემ ...)
+  for (const x of (stemIdx.get(K) || [])) if ((x.e.t === 'a' || x.e.t === 'poss') && x.g !== x.e.g) res.push({e:x.e, suf:null, cl:null, stemLen:K.length, ref:x.g, rank:1, trunc:true});
+  if (res.length) return res;
+  for (const s of SUFFIXES){
+    if (!K.endsWith(s.k)) continue;
+    const r = K.slice(0, K.length - s.k.length);
+    if (r.length < 2) continue;
+    for (const v of stemVariants(r)){
+      for (const x of (stemIdx.get(v) || [])) res.push({e:x.e, suf:s, cl:null, stemLen:r.length, ref:x.g, rank:2});
+    }
+    if (res.length) return res;
+  }
+  return res;
+}
+// Map parse letters to lexicon letters class-by-class (handles syncope and ambiguous letters)
+function align(G, K, ref){
+  const q = {};
+  for (const ch of ref){ const k = LOOSE[ch]; if (k) (q[k] || (q[k] = [])).push(ch); }
+  let out = '', sim = 0;
+  for (let i = 0; i < K.length; i++){
+    const arr = q[K[i]];
+    if (arr && arr.length){ const ch = arr.shift(); out += ch; if (ch === G[i]) sim++; }
+    else out += G[i];
+  }
+  return {out, sim};
+}
+
+function analyzeWord(word, mode){
+  if (/^\d+([.,]\d+)?$/.test(word)) return {word, cands:[], unk:{geo:word, unknown:true, digits:true}, isGeo:false};
+  const isGeo = /[ა-ჿ]/.test(word);
+  const parses = parseWord(word, mode === 'cyrillic' ? 'informal' : mode);
+  const cands = [];
+  parses.forEach((p, pi) => {
+    for (const h of lookup(p.K)){
+      const stemG = p.G.slice(0, h.stemLen), stemK = p.K.slice(0, h.stemLen);
+      const a = align(stemG, stemK, h.ref);
+      let geo;
+      if (isGeo) geo = p.G.join('');
+      else {
+        geo = a.out;
+        if (h.suf) geo += h.suf.g;
+        if (h.cl === 'a') geo += 'ა';
+        if (h.cl === 'c') geo += 'ც';
+        if (h.trunc) geo = a.out;
+      }
+      cands.push(Object.assign({}, h, {geo, sim:a.sim, pi}));
+    }
+  });
+  cands.sort((x,y) => x.rank - y.rank || y.sim - x.sim || x.pi - y.pi || x.e.ord - y.e.ord);
+  const seen = new Set(), uniq = [];
+  for (const c of cands){
+    if (seen.has(c.geo)) continue; seen.add(c.geo); uniq.push(c);
+  }
+  const unk = {geo: parses.length ? parses[0].G.join('') : word, unknown:true};
+  return {word, parses, cands: uniq.slice(0, 6), unk, isGeo};
+}
+
+/* ============================================================
+   RUSSIAN MORPHOLOGY (approximate)
+   ============================================================ */
+const FEM_SOFT = new Set(['дверь','соль','жизнь','любовь','боль','ночь','площадь','лошадь','церковь','осень','помощь','мысль','часть','тетрадь','речь','вещь','роль','морковь','кровь','тень','обувь','крепость','достопримечательность','радость']);
+const MASC_A = new Set(['папа','дедушка','мужчина','дядя','тамада']);
+const INDECL = new Set(['кафе','метро','такси','кофе','меню','фото','хачапури','хинкали','чача','лари','радио','кино','пальто','Тбилиси','Батуми','Кутаиси','лобио','чурчхела']);
+const PLURALE = new Set(['деньги','волосы','очки','овощи','фрукты','сладости','часы','люди','дети']);
+const FLEET = {'день':'дн','сон':'сн','рот':'рт','огурец':'огурц','отец':'отц','ветер':'ветр','камень':'камн','огонь':'огн','цветок':'цветк','подарок':'подарк','рынок':'рынк','конец':'конц','танец':'танц','любовь':'любв','церковь':'церкв','чеснок':'чеснок','лук':'лук'};
+const FORMS = {
+  'ванная':{gen:'ванной',dat:'ванной',ins:'ванной',prep:'ванной',acc:'ванную'},
+  'деньги':{gen:'денег'}, 'люди':{gen:'людей',dat:'людям',ins:'людьми',prep:'людях'},
+  'дети':{gen:'детей',dat:'детям',ins:'детьми',prep:'детях'},
+  'дочь':{gen:'дочери',dat:'дочери',ins:'дочерью',prep:'дочери'},
+  'время':{gen:'времени',dat:'времени',ins:'временем',prep:'времени'},
+  'имя':{gen:'имени',dat:'имени',ins:'именем',prep:'имени'},
+  'русский':{gen:'русского',dat:'русскому',ins:'русским',prep:'русском',acc:'русского'},
+  'мир':{}, 'путь':{gen:'пути',dat:'пути',ins:'путём',prep:'пути'}
+};
+const LOC_U = {'аэропорт':'аэропорту','лес':'лесу','сад':'саду','мост':'мосту','год':'году','рот':'рту','глаз':'глазу','берег':'берегу','снег':'снегу','шкаф':'шкафу'};
+const NA_WORDS = new Set(['рынок','вокзал','улица','площадь','работа','море','кухня','станция','остановка','почта','концерт','стадион','свадьба','урок','мост','гора','Украина','застолье','маршрутка','машина','такси','метро','автобус','поезд','самолёт']);
+const IRR_PL = {'человек':'люди','ребёнок':'дети','друг':'друзья','брат':'братья','сын':'сыновья','глаз':'глаза','дом':'дома','город':'города','лес':'леса','поезд':'поезда','цвет':'цвета','стул':'стулья','дерево':'деревья','ухо':'уши','яблоко':'яблоки','сестра':'сёстры','жена':'жёны','муж':'мужья','время':'времена','имя':'имена','дочь':'дочери','мать':'матери','слово':'слова','море':'моря','поле':'поля','место':'места','письмо':'письма','окно':'окна','вино':'вина','яйцо':'яйца','небо':'небеса','адрес':'адреса','номер':'номера','сосед':'соседи','гость':'гости','учитель':'учителя','хозяин':'хозяева','паспорт':'паспорта','вечер':'вечера','голос':'голоса','год':'годы','звезда':'звёзды','господин':'господа','англичанин':'англичане','грузин':'грузины'};
+const VELAR_SIB = /[гкхжшчщ]$/;
+
+function ruGender(w){
+  if (MASC_A.has(w)) return 'm';
+  if (FEM_SOFT.has(w) || w === 'дочь' || w === 'мать') return 'f';
+  if (PLURALE.has(w)) return 'pl';
+  const l = w.slice(-1);
+  if (l === 'а' || l === 'я') return (w.endsWith('мя') ? 'n' : 'f');
+  if (l === 'о' || l === 'е' || l === 'ё') return 'n';
+  if (INDECL.has(w)) return /кофе/.test(w) ? 'm' : 'n';
+  return 'm';
+}
+function ruPluralNom(w){
+  if (IRR_PL[w]) return IRR_PL[w];
+  if (INDECL.has(w) || PLURALE.has(w)) return w;
+  const l = w.slice(-1), s = w.slice(0,-1);
+  if (l === 'а') return s + (VELAR_SIB.test(s) ? 'и' : 'ы');
+  if (l === 'я') return w.endsWith('ия') ? s + 'и' : s + 'и';
+  if (l === 'ь' || l === 'й') return (FLEET[w] || s) + 'и';
+  if (l === 'о') return s + 'а';
+  if (l === 'е') return s + (w.endsWith('ие') ? 'я' : 'я');
+  const st = FLEET[w] || w;
+  return st + (VELAR_SIB.test(st) ? 'и' : 'ы');
+}
+function ruDecline(word, cas, pl, anim){
+  if (!word) return word;
+  if (word.includes(' ')){ // decline first word only
+    const i = word.indexOf(' ');
+    return ruDecline(word.slice(0,i), cas, pl, anim) + word.slice(i);
+  }
+  if (cas === 'nom') return pl ? ruPluralNom(word) : word;
+  if (INDECL.has(word) || (/[иуюэ]$/.test(word) && !PLURALE.has(word))) return word;
+  if (FORMS[word] && FORMS[word][cas]) return FORMS[word][cas];
+  const plural = pl || PLURALE.has(word);
+  if (plural){
+    const nom = PLURALE.has(word) ? word : ruPluralNom(word);
+    if (FORMS[nom] && FORMS[nom][cas]) return FORMS[nom][cas];
+    if (cas === 'acc'){ return anim ? ruDecline(word, 'gen', true, anim) : nom; }
+    const soft = /[ьйяеё]$/.test(word) || /я$/.test(nom);
+    const base = nom.slice(0,-1);
+    if (cas === 'prep') return base + (soft ? 'ях' : 'ах');
+    if (cas === 'dat') return base + (soft ? 'ям' : 'ам');
+    if (cas === 'ins') return base + (soft ? 'ями' : 'ами');
+    if (cas === 'gen'){
+      const g = ruGender(word), l = word.slice(-1);
+      if (/ья$/.test(nom)) return nom.slice(0,-2) + 'ей';
+      if (l === 'а' && g === 'm') return word.slice(0,-1);
+      if (g === 'm'){ if (/[жшчщь]$/.test(word)) return (FLEET[word]||word.replace(/ь$/,'')) + 'ей'; if (l==='й') return word.slice(0,-1)+'ев'; return (FLEET[word]||word) + 'ов'; }
+      if (l === 'а' || l === 'о') return word.slice(0,-1);
+      if (l === 'я') return word.endsWith('ия') ? word.slice(0,-1)+'й' : word.slice(0,-1)+'ь';
+      if (l === 'е') return word.endsWith('ие') ? word.slice(0,-1)+'й' : word.slice(0,-1)+'ей';
+      return base + 'ей';
+    }
+    return nom;
+  }
+  const g = ruGender(word), l = word.slice(-1), l2 = word.slice(-2);
+  if (cas === 'acc'){
+    if (l === 'а') return word.slice(0,-1) + 'у';
+    if (l === 'я' && !word.endsWith('мя')) return word.slice(0,-1) + 'ю';
+    if (g === 'm' && anim) return ruDecline(word, 'gen', false, anim);
+    return word;
+  }
+  if ((l === 'а' || l === 'я') && !word.endsWith('мя')){
+    const s = word.slice(0,-1), soft = l === 'я', ia = l2 === 'ия';
+    if (cas === 'gen') return s + (soft || VELAR_SIB.test(s) ? 'и' : 'ы');
+    if (cas === 'dat' || cas === 'prep') return s + (ia ? 'и' : 'е');
+    if (cas === 'ins') return s + (soft || /[жшчщц]$/.test(s) ? 'ей' : 'ой');
+  }
+  if (l === 'ь' && g === 'f'){
+    if (cas === 'ins') return word + 'ю';
+    return (FLEET[word] || word.slice(0,-1)) + 'и';
+  }
+  if (l === 'о' || l === 'е' || l === 'ё'){
+    const s = word.slice(0,-1), soft = l !== 'о', ie = l2 === 'ие' || l2 === 'ье';
+    if (cas === 'gen') return s + (soft ? 'я' : 'а');
+    if (cas === 'dat') return s + (soft ? 'ю' : 'у');
+    if (cas === 'ins') return s + (soft ? 'ем' : 'ом');
+    if (cas === 'prep') return s + (ie && l2==='ие' ? 'и' : 'е');
+  }
+  let s, soft = false;
+  if (l === 'й'){ s = word.slice(0,-1); soft = true; if (l2 === 'ий' && cas === 'prep') return s + 'и'; }
+  else if (l === 'ь'){ s = FLEET[word] || word.slice(0,-1); soft = true; }
+  else s = FLEET[word] || word;
+  const sib = /[жшчщц]$/.test(s);
+  if (cas === 'gen') return s + (soft ? 'я' : 'а');
+  if (cas === 'dat') return s + (soft ? 'ю' : 'у');
+  if (cas === 'ins') return s + (soft || sib ? 'ем' : 'ом');
+  if (cas === 'prep') return s + 'е';
+  return word;
+}
+const CASE_IDX = {nom:0, gen:1, dat:2, ins:3, prep:4};
+const ADJ_IRR = {
+  'мой':{m:['мой','моего','моему','моим','моём'],f:['моя','моей','моей','моей','моей','мою'],n:'моё',pl:['мои','моих','моим','моими','моих']},
+  'твой':{m:['твой','твоего','твоему','твоим','твоём'],f:['твоя','твоей','твоей','твоей','твоей','твою'],n:'твоё',pl:['твои','твоих','твоим','твоими','твоих']},
+  'свой':{m:['свой','своего','своему','своим','своём'],f:['своя','своей','своей','своей','своей','свою'],n:'своё',pl:['свои','своих','своим','своими','своих']},
+  'наш':{m:['наш','нашего','нашему','нашим','нашем'],f:['наша','нашей','нашей','нашей','нашей','нашу'],n:'наше',pl:['наши','наших','нашим','нашими','наших']},
+  'ваш':{m:['ваш','вашего','вашему','вашим','вашем'],f:['ваша','вашей','вашей','вашей','вашей','вашу'],n:'ваше',pl:['ваши','ваших','вашим','вашими','ваших']},
+  'этот':{m:['этот','этого','этому','этим','этом'],f:['эта','этой','этой','этой','этой','эту'],n:'это',pl:['эти','этих','этим','этими','этих']},
+  'тот':{m:['тот','того','тому','тем','том'],f:['та','той','той','той','той','ту'],n:'то',pl:['те','тех','тем','теми','тех']},
+  'один':{m:['один','одного','одному','одним','одном'],f:['одна','одной','одной','одной','одной','одну'],n:'одно',pl:['одни','одних','одним','одними','одних']},
+  'третий':{m:['третий','третьего','третьему','третьим','третьем'],f:['третья','третьей','третьей','третьей','третьей','третью'],n:'третье',pl:['третьи','третьих','третьим','третьими','третьих']}
+};
+function ruAgree(adj, g, cas, pl, anim){
+  if (!adj || adj.includes(' ')) return adj;
+  if (cas === 'acc'){
+    if (pl || g === 'pl') return anim ? ruAgree(adj, g, 'gen', pl, anim) : ruAgree(adj, g, 'nom', pl, anim);
+    if (g === 'm') return anim ? ruAgree(adj, g, 'gen', pl, anim) : adj;
+    if (g === 'n') return ruAgree(adj, g, 'nom', pl, anim);
+  }
+  const isPl = pl || g === 'pl';
+  const ci = CASE_IDX[cas] ?? 0;
+  if (ADJ_IRR[adj]){
+    const T = ADJ_IRR[adj];
+    if (isPl) return T.pl[ci];
+    if (g === 'f') return cas === 'acc' ? T.f[5] : T.f[ci];
+    if (g === 'n') return ci === 0 ? T.n : T.m[ci];
+    return T.m[ci];
+  }
+  if (adj === 'два' && g === 'f' && cas === 'nom') return 'две';
+  let stem, type, stressed = false;
+  if (/(ый|ой)$/.test(adj)){ stem = adj.slice(0,-2); stressed = adj.endsWith('ой'); type = /[гкх]$/.test(stem)?'velar':(/[жшчщ]$/.test(stem)?'sib':'hard'); }
+  else if (/ий$/.test(adj)){ stem = adj.slice(0,-2); type = /[гкх]$/.test(stem)?'velar':(/[жшчщ]$/.test(stem)?'sib':'soft'); }
+  else return adj;
+  const y = type === 'hard' ? 'ы' : 'и';
+  const o = (stressed || type === 'hard' || type === 'velar') ? 'о' : 'е';
+  const fa = type === 'soft' ? 'я' : 'а', fu = type === 'soft' ? 'ю' : 'у';
+  if (isPl) return stem + [y+'е', y+'х', y+'м', y+'ми', y+'х'][ci];
+  if (g === 'f') return stem + (cas === 'acc' ? fu+'ю' : [fa+'я', o+'й', o+'й', o+'й', o+'й'][ci]);
+  if (g === 'n' && ci === 0) return stem + o + 'е';
+  return ci === 0 ? adj : stem + ['', o+'го', o+'му', y+'м', o+'м'][ci];
+}
+function ruAdverb(adj){
+  if (adj === 'хороший') return 'хорошо';
+  if (/(ый|ий|ой)$/.test(adj)) return adj.slice(0,-2) + 'о';
+  return adj;
+}
+function ruPrepFix(p, next){
+  if (!next) return p;
+  const n = next.toLowerCase();
+  if (p === 'в' && /^[вф][^аеёиоуыэюя]/.test(n)) return 'во';
+  if (p === 'с' && (/^[сзшж][^аеёиоуыэюя]/.test(n) || /^мн/.test(n))) return 'со';
+  if (p === 'к' && /^мн/.test(n)) return 'ко';
+  return p;
+}
+
+/* ============================================================
+   ENGLISH HELPERS
+   ============================================================ */
+const EN_IRR_PL = {man:'men',woman:'women',child:'children',person:'people',tooth:'teeth',foot:'feet',mouse:'mice',fish:'fish',sheep:'sheep',money:'money',bread:'bread',water:'water',wine:'wine',clothes:'clothes',grapes:'grapes',vegetables:'vegetables',sweets:'sweets',wife:'wives',knife:'knives',life:'lives',glasses:'glasses',shoes:'shoes',people:'people',hair:'hair',khinkali:'khinkali',khachapuri:'khachapuri',beans:'beans',fruit:'fruit',food:'food',milk:'milk',meat:'meat',cheese:'cheese',tea:'tea',coffee:'coffee',beer:'beer',sugar:'sugar',salt:'salt',honey:'honey',juice:'juice',chacha:'chacha',lari:'lari'};
+function enPlural(w){
+  const parts = w.split(' '); const last = parts.pop();
+  let p;
+  if (EN_IRR_PL[last.toLowerCase()]) p = EN_IRR_PL[last.toLowerCase()];
+  else if (/[^aeiou]y$/.test(last)) p = last.slice(0,-1) + 'ies';
+  else if (/(s|sh|ch|x|z|o)$/.test(last)) p = last + 'es';
+  else p = last + 's';
+  return parts.concat(p).join(' ');
+}
+const primary = s => (s || '').split('/')[0].replace(/\s*\(.*?\)/g, '').trim();
+const clean = s => (s || '').replace(/\s*\(.*?\)/g, '').trim();
+const EN_BASE_IRR = {has:'have',does:'do',goes:'go',is:'be',saw:'see',went:'go',came:'come',ate:'eat',drank:'drink',bought:'buy',understood:'understand',heard:'hear',left:'leave',was:'be',were:'be'};
+function enBase(v){
+  if (EN_BASE_IRR[v]) return EN_BASE_IRR[v];
+  if (/ies$/.test(v)) return v.slice(0,-3) + 'y';
+  if (/(ches|shes|sses|xes)$/.test(v)) return v.slice(0,-2);
+  if (/ed$/.test(v)) return v.replace(/ied$/,'y').replace(/ed$/,'');
+  if (/s$/.test(v) && !/ss$/.test(v)) return v.slice(0,-1);
+  return v;
+}
+const EN_SUBJ = ['I','you','we','they','he','she','it'];
+const EN_AUX = ['am','are','is','was','were','will','can'];
+const PAST = /^(saw|went|came|ate|drank|bought|understood|heard|left|was|were|\w+ed)$/;
+function enNeg(g, kind){
+  if (kind === 'nu') return "don't " + g;
+  const w = g.split(' ');
+  let s = null, rest = w;
+  if (EN_SUBJ.includes(w[0])){ s = w[0]; rest = w.slice(1); }
+  const third = !s || ['he','she','it'].includes(s);
+  const pre = s ? [s] : [];
+  if (!rest.length) return (s ? s + ' ' : '') + 'not';
+  if (kind === 'ver'){
+    if (EN_AUX.includes(rest[0])) return pre.concat(["can't", rest[0]==='can'?'':'be'], rest.slice(1)).filter(Boolean).join(' ');
+    return pre.concat(["can't", enBase(rest[0])], rest.slice(1)).join(' ');
+  }
+  if (rest[0] === 'can') return pre.concat(["can't"], rest.slice(1)).join(' ');
+  if (EN_AUX.includes(rest[0])) return pre.concat([rest[0], 'not'], rest.slice(1)).join(' ');
+  if (PAST.test(rest[0])) return pre.concat(["didn't", enBase(rest[0])], rest.slice(1)).join(' ');
+  return pre.concat([third ? "doesn't" : "don't", third ? enBase(rest[0]) : rest[0]], rest.slice(1)).join(' ');
+}
+function enQuestion(g){
+  const w = g.split(' ');
+  if (!EN_SUBJ.includes(w[0]) || w.length < 2) return g;
+  if (EN_AUX.includes(w[1])) return [w[1], w[0]].concat(w.slice(2)).join(' ');
+  if (PAST.test(w[1])) return ['did', w[0], enBase(w[1])].concat(w.slice(2)).join(' ');
+  const third = ['he','she','it'].includes(w[0]);
+  return [third ? 'does' : 'do', w[0], third ? enBase(w[1]) : w[1]].concat(w.slice(2)).join(' ');
+}
+const RU_SUBJ_PRON = new Set(['я','ты','он','она','мы','вы','они','мне','тебе','ему','ей','нам','вам','им','меня','тебя','нас','вас','их','у','него']);
+function ruInsert(g, word){
+  if (!g) return word;
+  const w = g.split(' ');
+  let i = 0; while (i < w.length - 1 && RU_SUBJ_PRON.has(w[i])) i++;
+  w.splice(i, 0, word);
+  return w.join(' ');
+}
+function ruNeg(g, kind){
+  if (!g) return 'не';
+  if (kind === 'nu') return 'не ' + g;
+  if (/(^|\s)есть(\s|$)/.test(g)) return g.replace(/(^|\s)есть(\s|$)/, '$1нет$2');
+  const w = g.split(' ');
+  let i = 0; while (i < w.length - 1 && RU_SUBJ_PRON.has(w[i])) i++;
+  w.splice(i, 0, 'не');
+  return w.join(' ');
+}
+
+/* ============================================================
+   PRONOUN FORMS (for dropping duplicates like "me vici" -> "I know")
+   ============================================================ */
+const PRON_FORMS = {
+  'მე':{en:['i','me','my'],ru:['я','меня','мне','мной']},
+  'შენ':{en:['you','your'],ru:['ты','тебя','тебе','тобой']},
+  'ის':{en:['he','she','him','her'],ru:['он','она','его','её','ему','ей','него','неё','нему']},
+  'მან':{en:['he','she'],ru:['он','она','него']},
+  'მას':{en:['him','her'],ru:['ему','ей','него','нему']},
+  'ჩვენ':{en:['we','us','our'],ru:['мы','нас','нам']},
+  'თქვენ':{en:['you','your'],ru:['вы','вас','вам']},
+  'ისინი':{en:['they','them'],ru:['они','их','им','них']},
+  'მათ':{en:['they','them'],ru:['они','их','им','них']}
+};
+const TRANSPORT = new Set(['bus','car','taxi','train','airplane','metro','minibus']);
+const DAYS_EN = new Set(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']);
+const POSS_EN = {my:'mine',your:'yours','his/her':'his/hers',our:'ours',their:'theirs'};
+const INTENS = new Set(['ძალიან','ცოტა']);
+
+/* ============================================================
+   TRANSLATION PIPELINE
+   ============================================================ */
+function tokenize(text){
+  const toks = [];
+  const re = /([A-Za-zა-ჿЀ-ӿ0-9]+(?:['’`][A-Za-zა-ჿ0-9]*)*)|(\n)|(\s+)|([^\sA-Za-zა-ჿЀ-ӿ0-9]+)/g;
+  let m;
+  while ((m = re.exec(text))){
+    if (m[1]) toks.push({t:'w', s:m[1].replace(/’/g,"'")});
+    else if (m[2]) toks.push({t:'nl', s:'\n'});
+    else if (m[3]) toks.push({t:'sp', s:m[3]});
+    else toks.push({t:'p', s:m[4]});
+  }
+  return toks;
+}
+
+function run(text, modeSel, overrides){
+  const mode = modeSel === 'auto' ? detectMode(text) : modeSel;
+  const toks = tokenize(text);
+  const wordIdx = [];
+  const wordMode = w => {
+    if (modeSel !== 'auto') return mode;
+    if (/[a-z][WRTSJZC]/.test(w)) return 'keyboard';
+    if (mode === 'national') return 'national';
+    return 'auto';
+  };
+  toks.forEach((t, i) => { if (t.t === 'w'){ t.an = analyzeWord(t.s, wordMode(t.s)); wordIdx.push(i); } });
+
+  // phrase matching over consecutive words (only spaces between)
+  for (let wi = 0; wi < wordIdx.length; wi++){
+    const ti = wordIdx[wi];
+    if (toks[ti].phrase || toks[ti].inPhrase) continue;
+    const keys0 = new Set(toks[ti].an.parses ? toks[ti].an.parses.map(p => p.K) : []);
+    let best = null;
+    for (const k of keys0){
+      for (const ph of (phraseIdx.get(k) || [])){
+        let ok = true, idxs = [ti];
+        for (let j = 1; j < ph.keys.length; j++){
+          const nti = wordIdx[wi + j];
+          if (nti === undefined){ ok = false; break; }
+          for (let x = idxs[idxs.length-1] + 1; x < nti; x++) if (toks[x].t !== 'sp'){ ok = false; break; }
+          if (!ok) break;
+          const ks = toks[nti].an.parses ? toks[nti].an.parses.map(p => p.K) : [];
+          if (!ks.includes(ph.keys[j])){ ok = false; break; }
+          idxs.push(nti);
+        }
+        if (ok && (!best || ph.keys.length > best.ph.keys.length)) best = {ph, idxs};
+      }
+    }
+    if (best){
+      best.idxs.forEach((x, j) => { toks[x].inPhrase = true; toks[x].phGeo = toks[x].an.isGeo ? toks[x].s : best.ph.words[j]; toks[x].phrase = best.ph; });
+      toks[best.idxs[0]].phraseHead = best;
+      wi += best.idxs.length - 1;
+    }
+  }
+
+  // choose analysis per word
+  let unknownCount = 0, wordCount = 0;
+  toks.forEach((t, i) => {
+    if (t.t !== 'w') return;
+    wordCount++;
+    const an = t.an;
+    const opts = an.cands.length ? an.cands : [an.unk];
+    t.opts = opts;
+    let choice = overrides.get(i + ':' + t.s) || 0;
+    if (choice >= opts.length) choice = 0;
+    t.choice = choice;
+    t.sel = opts[choice];
+    if (t.inPhrase) t.geo = t.phGeo;
+    else t.geo = t.sel.geo;
+    if (!t.inPhrase && t.sel.unknown && !t.sel.digits) unknownCount++;
+  });
+
+  // Build items for translation
+  const items = [];
+  for (const t of toks){
+    if (t.t === 'w'){
+      if (t.inPhrase){ if (t.phraseHead) items.push({k:'ph', en:t.phraseHead.ph.en, ru:t.phraseHead.ph.ru}); continue; }
+      const s = t.sel;
+      if (s.unknown) items.push({k:'w', t: s.digits ? 'digits' : 'unk', geo:t.geo, src:t.s});
+      else items.push({k:'w', t:s.e.t, e:s.e, suf:s.suf, cl:s.cl, geo:t.geo});
+    } else if (t.t === 'p') items.push({k:'p', s:t.s});
+    else if (t.t === 'nl') items.push({k:'nl'});
+  }
+
+  const {en, ru} = translateItems(items);
+  return {toks, mode, en, ru, unknownCount, wordCount};
+}
+
+function splitSentences(items){
+  const out = []; let cur = [];
+  for (const it of items){
+    cur.push(it);
+    if (it.k === 'nl' || (it.k === 'p' && /[.!?…]/.test(it.s))){ out.push(cur); cur = []; }
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+const isNoun = it => it && it.k === 'w' && (it.t === 'n' || it.t === 'h');
+const isMod = it => it && it.k === 'w' && (it.t === 'a' || it.t === 'poss' || it.t === 'dem' || it.t === 'num' || (it.t === 'p' && it.e.g === 'ის'));
+const isVerb = u => u && u.u === 'w' && (u.it.t === 'v' || u.it.t === 'vt');
+const EN_SUBJ0 = ['I','you','we','they','he','she','it'];
+const isVerbLike = u => isVerb(u) || (u && u.u === 'ph' && EN_SUBJ0.includes(u.it.en.split(' ')[0]));
+const glossOf = (u, lang) => u.u === 'ph' ? u.it[lang] : (lang === 'en' ? u.it.e.en : u.it.e.ru);
+const TIME_ADV = new Set(['დღეს','ხვალ','გუშინ','ახლა','მერე','ზეგ','უკვე','ხანდახან','ყოველთვის']);
+
+function buildUnits(sent){
+  const units = [];
+  for (let i = 0; i < sent.length; i++){
+    const it = sent[i];
+    if (isMod(it) && !it.suf?.pl && !it.cl){
+      let j = i; while (isMod(sent[j]) && !sent[j].cl) j++;
+      if (isNoun(sent[j])){
+        let a = i;
+        if (sent[j].cl === 'a') while (a < j && (sent[a].t === 'dem' || (sent[a].t === 'p' && sent[a].e.g === 'ის'))){ units.push({u:'w', it: sent[a]}); a++; }
+        units.push({u:'np', mods: sent.slice(a, j), head: sent[j]}); i = j; continue;
+      }
+    }
+    if (isNoun(it)){ units.push({u:'np', mods:[], head:it}); continue; }
+    if (it.k === 'w') units.push({u:'w', it});
+    else if (it.k === 'ph') units.push({u:'ph', it});
+    else if (it.k === 'p') units.push({u:'p', it});
+    else if (it.k === 'nl') units.push({u:'nl'});
+  }
+  // genitive chains: NP(gen) + NP  ->  NP with genOf
+  for (let i = 0; i < units.length - 1; i++){
+    const a = units[i], b = units[i+1];
+    const vowelDat = a.u === 'np' && a.head.suf && a.head.suf.c === 'dat' && /[აეოუ]$/.test(a.head.e.g) && !a.head.suf.pl;
+    if (vowelDat && b.u === 'np') a.head = Object.assign({}, a.head, {suf: Object.assign({}, a.head.suf, {c:'gen'})});
+    if (a.u === 'np' && b.u === 'np' && a.head.suf && a.head.suf.c === 'gen' && !a.head.cl){
+      b.genOf = a; units.splice(i, 1); i--;
+    }
+  }
+  return units;
+}
+const npCase = np => np.head.suf ? np.head.suf.c : 'nom';
+
+function renderNP(np, lang, ctx, bare){
+  const head = np.head, cas = npCase(np), pl = !!(head.suf && head.suf.pl);
+  const human = head.t === 'h';
+  const numMod = np.mods.find(m => m.t === 'num');
+  const nval = numMod ? numMod.e.num : null;
+  if (lang === 'en'){
+    let noun = primary(head.e.en);
+    if (pl || (nval && nval > 1)) noun = enPlural(noun);
+    const mods = np.mods.map(m => {
+      if (m.t === 'dem' || (m.t === 'p' && m.e.g === 'ის')){ const d = m.t === 'p' ? 'that' : primary(m.e.en); return pl ? (d === 'this' ? 'these' : 'those') : d; }
+      return m.t === 'poss' ? clean(m.e.en).split('/')[0] : primary(m.e.en);
+    });
+    let core = mods.concat(noun).join(' ');
+    if (np.genOf) core += ' of ' + renderNP(np.genOf, 'en', ctx, true);
+    if (bare) return core;
+    let prep = null;
+    switch (cas){
+      case 'shi': prep = ctx.motion ? 'to' : 'in'; break;
+      case 'ze': prep = 'on'; break;
+      case 'tan': prep = human ? 'with' : 'at'; break;
+      case 'idan': prep = 'from'; break;
+      case 'istvis': prep = 'for'; break;
+      case 'isken': prep = 'towards'; break;
+      case 'ivit': prep = 'like'; break;
+      case 'amde': prep = human ? 'until' : 'up to'; break;
+      case 'ins': prep = TRANSPORT.has(primary(head.e.en)) ? 'by' : 'with'; break;
+      case 'gen': prep = 'of'; break;
+      case 'adv': prep = 'as'; break;
+      case 'dat': if (DAYS_EN.has(primary(head.e.en))) prep = 'on'; break;
+    }
+    let s = prep ? prep + ' ' + core : core;
+    if (head.cl === 'a') s = 'is ' + s;
+    if (head.cl === 'c') s += ' too';
+    return s;
+  }
+  // Russian
+  const noun = primary(head.e.ru);
+  const g = ruGender(noun);
+  let prep = null, rc = 'nom';
+  switch (cas){
+    case 'shi': prep = NA_WORDS.has(noun) ? 'на' : 'в'; rc = ctx.motion ? 'acc' : 'prep'; break;
+    case 'ze': prep = 'на'; rc = 'prep'; break;
+    case 'tan': if (human){ prep = 'с'; rc = 'ins'; } else { prep = 'у'; rc = 'gen'; } break;
+    case 'idan': prep = human ? 'от' : (NA_WORDS.has(noun) ? 'с' : 'из'); rc = 'gen'; break;
+    case 'istvis': prep = 'для'; rc = 'gen'; break;
+    case 'isken': prep = 'к'; rc = 'dat'; break;
+    case 'ivit': prep = 'как'; rc = 'nom'; break;
+    case 'amde': prep = 'до'; rc = 'gen'; break;
+    case 'gen': rc = 'gen'; break;
+    case 'ins': rc = 'ins'; if (human) prep = 'с'; break;
+    case 'dat': rc = 'acc'; if (DAYS_EN.has(primary(head.e.en))) prep = 'в'; break;
+    case 'adv': prep = 'в качестве'; rc = 'gen'; break;
+    default: rc = (ctx.negHave && !bare) ? 'gen' : ((ctx.acc && !bare) ? 'acc' : 'nom');
+  }
+  if (bare) rc = 'gen';
+  let nounForm;
+  let plural = pl;
+  if (nval && !pl){
+    const last = nval % 10, last2 = nval % 100;
+    if ((rc === 'nom' || rc === 'acc') && nval > 1){
+      if (last >= 2 && last <= 4 && !(last2 >= 12 && last2 <= 14)) nounForm = ruDecline(noun, 'gen', false, human);
+      else if (last !== 1 || last2 === 11) nounForm = ruDecline(noun, 'gen', true, human);
+    } else if (nval > 1) plural = true;
+  }
+  if (!nounForm){
+    if (rc === 'prep' && cas === 'shi' || rc === 'prep' && cas === 'ze'){ nounForm = (!plural && LOC_U[noun]) ? LOC_U[noun] : ruDecline(noun, rc, plural, human); }
+    else nounForm = ruDecline(noun, rc, plural, human);
+  }
+  const mods = np.mods.map(m => {
+    let base = m.t === 'p' ? 'тот' : primary(m.e.ru);
+    if (m.t === 'num' && m.e.num > 2) return base;
+    return ruAgree(base, g, rc, plural, human);
+  });
+  const parts = mods.concat(nounForm);
+  if (np.genOf) parts.push(renderNP(np.genOf, 'ru', ctx, true));
+  if (prep) parts.unshift(ruPrepFix(prep, parts[0]));
+  let s = parts.join(' ');
+  if (head.cl === 'c') s += ' тоже';
+  return s;
+}
+
+function renderWord(u, lang, ctx, sentUnits, idx, pos){
+  const it = u.it;
+  if (it.t === 'unk'){
+    let s = lang === 'en' ? romanize(it.geo) : toCyr(it.geo);
+    if (it.src && /^[A-ZА-ЯЁ]/.test(it.src) && !/[a-zа-яё][A-Z]/.test(it.src)) s = s.charAt(0).toUpperCase() + s.slice(1);
+    return s;
+  }
+  if (it.t === 'digits') return it.geo;
+  const e = it.e;
+  const G = lang === 'en' ? e.en : e.ru;
+  switch (it.t){
+    case 'p': {
+      if (ctx.drop[lang].has(idx)) return '';
+      return clean(G);
+    }
+    case 'v': case 'vt': {
+      let s = clean(G);
+      if (lang === 'en') s = primary(e.en.replace(/\//g,'/')) === s ? s : s;
+      if (u.neg){ s = lang === 'en' ? enNeg(s, u.neg) : ruNeg(s, u.neg); }
+      if (lang === 'ru' && u.ruAdv && u.ruAdv.length) s = ruInsert(s, u.ruAdv.join(' '));
+      else if (ctx.q && lang === 'en' && u === ctx.qVerb) s = enQuestion(s);
+      return s;
+    }
+    case 'a': {
+      let s = primary(G);
+      if (it.suf && it.suf.c === 'adv'){
+        if (lang === 'en') s = s === 'good' ? 'well' : (/y$/.test(s) ? s.slice(0,-1)+'ily' : (/le$/.test(s) ? s.slice(0,-1)+'y' : s + 'ly'));
+        else s = ruAdverb(s);
+      } else if (lang === 'ru' && ctx.lastGender) s = ruAgree(s, ctx.lastGender, 'nom', ctx.lastGender === 'pl', false);
+      if (it.cl === 'a' && lang === 'en') s = (u.intens ? 'is ' + u.intens + ' ' : 'is ') + s;
+      else if (u.intens && lang === 'en') s = u.intens + ' ' + s;
+      if (it.cl === 'c') s += lang === 'en' ? ' too' : ' тоже';
+      return s;
+    }
+    case 'poss': {
+      let s = clean(G);
+      if (lang === 'en' && it.cl === 'a') return 'is ' + (POSS_EN[s] || s);
+      if (lang === 'en') return POSS_EN[s] || s;
+      return s;
+    }
+    case 'dem': {
+      if (lang === 'ru') return ({'этот':'это','тот':'то'})[primary(G)] || primary(G);
+      return primary(G);
+    }
+    case 'num': return primary(G);
+    default: {
+      if (it.e.g === 'ძალიან' && lang === 'en' && u.movedAfterVerb){ const n = sentUnits[pos+1]; if (!n || n.u === 'p' || n.u === 'nl' || isVerbLike(n)) return 'very much'; }
+      let s = primary(G);
+      if (it.cl === 'a' && lang === 'en') s = 'is ' + s;
+      if (it.cl === 'c') s += lang === 'en' ? ' too' : ' тоже';
+      return s;
+    }
+  }
+}
+
+function translateItems(items){
+  const out = {en:[], ru:[]};
+  for (const sent of splitSentences(items)){
+    const units = buildUnits(sent);
+    const endP = sent.filter(i => i.k === 'p').map(i => i.s).join('');
+    const ctx = {q: /\?/.test(endP), acc: units.some(u => u.u === 'w' && u.it.t === 'vt'), drop:{en:new Set(), ru:new Set()}};
+
+    // attach negation to following verb
+    for (let i = 0; i < units.length - 1; i++){
+      const u = units[i];
+      if (u.u === 'w' && u.it.t === 'neg' && isVerb(units[i+1])){
+        units[i+1].neg = u.it.e.g === 'ვერ' ? 'ver' : (u.it.e.g === 'ნუ' ? 'nu' : 'ar');
+        units.splice(i, 1);
+      }
+    }
+    // intensifier before predicate adjective ("dzalian lamazia")
+    for (let i = 0; i < units.length - 1; i++){
+      const u = units[i], n = units[i+1];
+      if (u.u === 'w' && INTENS.has(u.it.e?.g) && n.u === 'w' && n.it.t === 'a' && n.it.cl === 'a'){
+        n.intens = primary(u.it.e.en); units.splice(i, 1);
+      }
+    }
+    // pronoun dropping
+    const verbs = units.filter(isVerbLike);
+    units.forEach((u, i) => {
+      if (u.u !== 'w' || u.it.t !== 'p') return;
+      const F = PRON_FORMS[u.it.e.g]; if (!F) return;
+      for (const lang of ['en','ru']){
+        const hit = verbs.some(v => {
+          const words = clean(glossOf(v, lang)).toLowerCase().split(/\s+/);
+          return F[lang].some(f => words.includes(f));
+        });
+        if (hit) ctx.drop[lang].add(u);
+      }
+    });
+    // reorder: move objects/adverbs that precede a verb to after it (SOV -> SVO)
+    const hasSubjInGloss = v => EN_SUBJ.includes(clean(glossOf(v, 'en')).split(' ')[0]);
+    const byLang = {en: units.slice(), ru: units.slice()};
+    for (const L of ['en','ru']){
+    const units = byLang[L];
+    for (let vi = 0; vi < units.length; vi++){
+      const v = units[vi];
+      if (!isVerbLike(v)) continue;
+      let j = vi - 1; const run = [];
+      while (j >= 0){
+        const u = units[j];
+        if (u.u === 'np' || (u.u === 'w' && ['x','a','num','p','poss','dem','unk'].includes(u.it.t))){ run.unshift(u); j--; }
+        else break;
+      }
+      if (!run.length) continue;
+      let start = 0;
+      if (!hasSubjInGloss(v)){
+        // keep the first nominative/ergative element as the subject
+        const s = run.findIndex(u => (u.u === 'np' && ['nom','erg'].includes(npCase(u))) || (u.u === 'w' && u.it.t === 'p'));
+        start = s >= 0 ? s + 1 : 0;
+        if (s < 0) continue;
+      } else {
+        // skip dropped pronouns at the front; keep time adverbs in place
+        while (start < run.length && run[start].u === 'w' && ((run[start].it.t === 'p' && ctx.drop.en.has(run[start])) || (run[start].it.e && TIME_ADV.has(run[start].it.e.g)))) start++;
+      }
+      const moving = run.slice(start);
+      if (!moving.length) continue;
+      const isAdv = m => m.u === 'w' && m.it.t === 'x';
+      const from = j + 1 + start;
+      units.splice(from, moving.length);
+      let vpos = units.indexOf(v);
+      const objs = moving.filter(m => !isAdv(m)), advs = moving.filter(isAdv);
+      if (L === 'ru'){
+        // adverbs go inside the verb phrase: "я очень люблю"
+        v.ruAdv = (v.ruAdv || []).concat(advs.map(a => primary(a.it.e.ru)));
+        units.splice(vpos + 1, 0, ...objs);
+        vi = vpos + objs.length;
+      } else {
+        advs.forEach(m => m.movedAfterVerb = true);
+        units.splice(vpos + 1, 0, ...objs);
+        let end = vpos + 1 + objs.length;
+        while (end < units.length && !(units[end].u === 'p' || units[end].u === 'nl' || isVerbLike(units[end]) || (units[end].u === 'w' && ['c','q'].includes(units[end].it.t)))) end++;
+        units.splice(end, 0, ...advs);
+        vi = end + advs.length - 1;
+      }
+    }
+    }
+    ctx.negHave = verbs.some(v => v.neg && /(^|\s)есть(\s|$)/.test(glossOf(v,'ru')));
+    ctx.qVerb = ctx.q ? units.find(u => isVerb(u) && !u.neg) : null;
+    ctx.motion = verbs.some(v => /\b(go|going|goes|come|coming|comes|went|came|return)\b/.test(glossOf(v, 'en')));
+
+    for (const lang of ['en','ru']){
+      const units = byLang[lang];
+      const parts = [];
+      ctx.lastGender = null;
+      units.forEach((u, i) => {
+        if (u.u === 'np'){
+          parts.push({s: renderNP(u, lang, ctx, false), k:'w'});
+          if (lang === 'ru'){ const n = primary(u.head.e.ru); ctx.lastGender = (u.head.suf && u.head.suf.pl) ? 'pl' : ruGender(n); }
+        }
+        else if (u.u === 'w') parts.push({s: renderWord(u, lang, ctx, units, u, i), k:'w'});
+        else if (u.u === 'ph'){
+          let g = u.it[lang];
+          if (g.includes(' ~ ')){ const n = units[i+1]; const [a, b] = g.split(' ~ '); g = (n && n.u !== 'p' && n.u !== 'nl') ? a : b; }
+          if (lang === 'ru' && u.ruAdv && u.ruAdv.length) g = ruInsert(g, u.ruAdv.join(' '));
+          parts.push({s: g, k:'w'});
+        }
+        else if (u.u === 'p') parts.push({s: u.it.s, k:'p'});
+        else if (u.u === 'nl') parts.push({s:'\n', k:'nl'});
+      });
+      out[lang].push(...parts.filter(p => p.s !== ''));
+      out[lang].push({k:'end'});
+    }
+  }
+  return {en: joinParts(out.en, 'en'), ru: joinParts(out.ru, 'ru')};
+}
+
+function joinParts(parts, lang){
+  let s = '', capNext = true;
+  for (const p of parts){
+    if (p.k === 'end'){ continue; }
+    if (p.k === 'nl'){ s = s.replace(/ +$/,'') + '\n'; capNext = true; continue; }
+    if (p.k === 'p'){
+      const open = /^[(«"“'\[]+$/.test(p.s);
+      if (open){ s += (s && !/[\s\n]$/.test(s) ? ' ' : '') + p.s; }
+      else s = s.replace(/ +$/,'') + p.s;
+      if (/[.!?…]/.test(p.s)) capNext = true;
+      continue;
+    }
+    let w = p.s;
+    if (capNext && w){ w = w.charAt(0).toUpperCase() + w.slice(1); capNext = false; }
+    const needSpace = s && !/[\s\n(«"“\[]$/.test(s);
+    s += (needSpace ? ' ' : '') + w;
+  }
+  if (lang === 'en') s = s.replace(/\bi\b/g, 'I');
+  return s.trim();
+}
+
+/* expose for testing */
+window.GT = {run, analyzeWord, parseWord, lookup, ruDecline, ruAgree, LEX, PHRASES};
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const src = $('src'), modeSel = $('mode');
+const overrides = new Map();
+let last = null;
+
+const EXAMPLES = [
+  'gamarjoba! rogor xar?',
+  'me miqvars saqartvelo',
+  "ts'qali minda",
+  'me tbilisshi vcxovrob',
+  'sad aris sastumro?',
+  'chemi megobris saxli didia',
+  'kartuli ar vici, bodishi',
+  'dzalian gemrielia, didi madloba!',
+  'xval batumshi mivdivar',
+  'es chemi dedaa',
+  'гамарджоба, როგორ ხარ?'
+];
+EXAMPLES.forEach(ex => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = ex;
+  b.onclick = () => { src.value = ex; overrides.clear(); update(); src.focus(); };
+  $('examples').appendChild(b);
+});
+
+function esc(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function update(){
+  const text = src.value;
+  if (!text.trim()){
+    $('outGeo').innerHTML = '<span class="empty">Georgian script appears here.</span>';
+    $('outRoman').textContent = '';
+    $('outEn').innerHTML = '<span class="empty">English translation.</span>';
+    $('outRu').innerHTML = '<span class="empty">Перевод на русский.</span>';
+    $('status').textContent = '';
+    last = null; return;
+  }
+  const r = run(text, modeSel.value, overrides);
+  last = r;
+  let html = '', plain = '';
+  r.toks.forEach((t, i) => {
+    if (t.t !== 'w'){ html += esc(t.s); plain += t.s; return; }
+    plain += t.geo;
+    let cls = 'w', tip = '';
+    if (t.inPhrase){ cls += ' ph'; tip = t.phrase.en + ' · ' + t.phrase.ru; }
+    else if (t.sel.unknown){ if (!t.sel.digits) cls += ' unk'; tip = 'not in dictionary'; }
+    else {
+      const e = t.sel.e;
+      tip = clean(e.en) + ' · ' + clean(e.ru);
+      if (t.sel.suf && t.sel.suf.c !== 'nom') tip += '  [' + e.g + ' + ' + t.sel.suf.g + ']';
+    }
+    const alt = !t.inPhrase && t.opts.length > 1;
+    if (alt) cls += ' alt';
+    html += `<span class="${cls}" data-i="${i}" data-tip="${esc(tip)}"${alt ? ' tabindex="0" role="button"' : ''}>${esc(t.geo)}</span>`;
+  });
+  $('outGeo').innerHTML = html;
+  $('outGeo').dataset.plain = plain;
+  $('outRoman').textContent = romanize(plain);
+  $('outEn').textContent = r.en;
+  $('outRu').textContent = r.ru;
+  const modeName = {informal:'chat / informal', national:'national 2002', keyboard:'Georgian keyboard', cyrillic:'Cyrillic', auto:'auto'}[r.mode];
+  $('status').textContent = (modeSel.value === 'auto' ? 'Detected: ' + modeName + ' · ' : '') + r.wordCount + ' word' + (r.wordCount === 1 ? '' : 's') + (r.unknownCount ? ' · ' + r.unknownCount + ' not in dictionary' : '');
+}
+
+$('outGeo').addEventListener('click', ev => {
+  const el = ev.target.closest('.w.alt'); if (!el || !last) return;
+  cycle(+el.dataset.i);
+});
+$('outGeo').addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  const el = ev.target.closest('.w.alt'); if (!el) return;
+  ev.preventDefault(); cycle(+el.dataset.i);
+  const again = $('outGeo').querySelector(`[data-i="${el.dataset.i}"]`); if (again) again.focus();
+});
+function cycle(i){
+  const t = last.toks[i]; const key = i + ':' + t.s;
+  overrides.set(key, (t.choice + 1) % t.opts.length);
+  update();
+}
+
+// tooltip
+const tip = $('tip');
+document.addEventListener('mouseover', ev => {
+  const el = ev.target.closest && ev.target.closest('.geo-out .w');
+  if (!el){ tip.style.opacity = 0; return; }
+  const t = last && last.toks[+el.dataset.i];
+  let extra = '';
+  if (t && t.opts && t.opts.length > 1 && !t.inPhrase) extra = `<div style="opacity:.7;margin-top:3px">${t.opts.length} options — click to switch</div>`;
+  tip.innerHTML = `<div class="g">${esc(el.textContent)} <span style="opacity:.7;font-family:var(--ui-font);font-size:12px">${esc(romanize(el.textContent))}</span></div><div>${esc(el.dataset.tip || '')}</div>${extra}`;
+  const r = el.getBoundingClientRect();
+  tip.style.opacity = 1;
+  const tw = tip.offsetWidth;
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - tw - 8, r.left)) + 'px';
+  tip.style.top = (r.bottom + 6) + 'px';
+});
+
+let timer = null;
+src.addEventListener('input', () => { overrides.clear(); clearTimeout(timer); timer = setTimeout(update, 80); });
+modeSel.addEventListener('change', () => { overrides.clear(); update(); });
+$('clearBtn').onclick = () => { src.value = ''; overrides.clear(); update(); src.focus(); };
+
+document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', async () => {
+  const what = b.dataset.copy;
+  const text = what === 'geo' ? ($('outGeo').dataset.plain || '') : $(what === 'en' ? 'outEn' : 'outRu').textContent;
+  try { await navigator.clipboard.writeText(text); }
+  catch (e){ const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch(_){} ta.remove(); }
+  const old = b.textContent; b.textContent = 'Copied'; setTimeout(() => b.textContent = old, 1100);
+}));
+
+// tabs
+function selectTab(name){
+  if (!['translate','dict','alpha'].includes(name)) name = 'translate';
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.tab === name));
+  ['translate','dict','alpha'].forEach(p => $('p-' + p).hidden = p !== name);
+  if (name === 'dict') renderDict();
+}
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+  selectTab(b.dataset.tab);
+  history.replaceState(null, '', b.dataset.tab === 'translate' ? location.pathname + location.search : '#' + b.dataset.tab);
+}));
+window.addEventListener('hashchange', () => selectTab(location.hash.slice(1)));
+
+// theme toggle (per-page only; no storage)
+$('themeBtn').onclick = () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+};
+
+// dictionary
+const TYPE_NAME = {n:'noun',h:'noun (person)',a:'adjective',poss:'possessive',dem:'demonstrative',p:'pronoun',v:'verb',vt:'verb',q:'question',c:'conjunction',neg:'negation',x:'word',num:'number',ph:'phrase'};
+const ALL_ROWS = LEX.map(e => ({g:e.g, en:e.en, ru:e.ru, t:e.t, key:e.key}))
+  .concat(PHRASES.map(p => ({g:p.g, en:p.en, ru:p.ru, t:'ph', key:p.keys.join(' ')})))
+  .sort((a,b) => a.g.localeCompare(b.g, 'ka'));
+function renderDict(){
+  const q = $('dictQ').value.trim();
+  let rows = ALL_ROWS;
+  if (q){
+    const ql = q.toLowerCase();
+    const keys = new Set();
+    q.split(/\s+/).length === 1 && parseWord(q, 'auto').forEach(p => keys.add(p.K));
+    const keyStr = [...keys];
+    rows = rows.filter(r => r.g.includes(q) || r.en.toLowerCase().includes(ql) || r.ru.toLowerCase().includes(ql) || keyStr.some(k => k.length >= 2 && r.key.includes(k)));
+  }
+  $('dictCount').textContent = rows.length + ' of ' + ALL_ROWS.length + ' entries';
+  $('dictBody').innerHTML = rows.slice(0, 600).map(r => `<tr><td class="g">${esc(r.g)}</td><td class="r">${esc(romanize(r.g))}</td><td>${esc(r.en)}</td><td>${esc(r.ru || '—')}</td><td class="t">${TYPE_NAME[r.t] || ''}</td></tr>`).join('');
+}
+$('dictQ').addEventListener('input', renderDict);
+
+// alphabet
+$('alphaGrid').innerHTML = [...GEO_LETTERS].map(ch => `<div class="card letter"><div class="big">${ch}</div><div class="rows">national <b>${NATIONAL[ch]}</b><br>chat <b>${CHAT[ch]}</b><br>keyboard <span class="kbd">${KEYB[ch]}</span><br>кириллица <b>${CYR[ch]}</b></div></div>`).join('');
+
+$('note').textContent = `Everything runs in this page with no internet connection. Georgian script is produced letter by letter and checked against a built-in dictionary of ${LEX.length} words and ${PHRASES.length} set phrases, which also handles case endings and postpositions (-ში, -ზე, -თან, -დან, -ის, -ით, plurals in -ებ-). The English and Russian translations come from that dictionary plus simple grammar rules, so they are exact for set phrases, good for short everyday sentences, and rough for long or complex text.`;
+
+// Text arriving from the manifest share target (?text=...) or a link (?q=...)
+(function initialState(){
+  const p = new URLSearchParams(location.search);
+  const shared = [p.get('q'), p.get('title'), p.get('text'), p.get('url')].filter(Boolean).join(' ').trim();
+  if (shared) src.value = shared;
+  if (location.hash) selectTab(location.hash.slice(1));
+})();
+update();
+
+/* ============================================================
+   PWA: service worker (offline + permanent cache) and install
+   ============================================================ */
+// Only on http(s): opening the file directly from disk keeps working without it.
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  let reloading = false;
+  // Reload only when an existing worker is replaced (an update), not on the first install.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return; reloading = true; location.reload();
+  });
+  const offerUpdate = reg => {
+    if (!reg.waiting || !navigator.serviceWorker.controller) return;
+    $('updateBar').hidden = false;
+    $('updateBtn').onclick = () => reg.waiting && reg.waiting.postMessage({type:'SKIP_WAITING'});
+  };
+  window.addEventListener('load', async () => {
+    try {
+      // updateViaCache:'none' => the browser always checks sw.js on the network,
+      // so a new deploy is noticed even though every other file is cached forever.
+      const reg = await navigator.serviceWorker.register('sw.js', {scope: './', updateViaCache: 'none'});
+      offerUpdate(reg);
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw && nw.addEventListener('statechange', () => { if (nw.state === 'installed') offerUpdate(reg); });
+      });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    } catch (e) { console.warn('Service worker registration failed', e); }
+  });
+}
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('installBtn').hidden = false; });
+$('installBtn').onclick = async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  try { await deferredInstall.userChoice; } catch (_) {}
+  deferredInstall = null; $('installBtn').hidden = true;
+};
+window.addEventListener('appinstalled', () => { $('installBtn').hidden = true; });
+</script>
+</body>
+</html>

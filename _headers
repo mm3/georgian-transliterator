@@ -1,0 +1,22 @@
+# HTTP caching rules for hosts that read a _headers file (Netlify, Cloudflare Pages).
+# GitHub Pages ignores this file and always sends "Cache-Control: max-age=600";
+# there the service worker (sw.js) provides the permanent cache instead.
+
+# Content-hashed files: the URL changes whenever the content does, so cache forever.
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.webmanifest
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: application/manifest+json
+
+# Entry points must always be revalidated, otherwise a new version could never arrive.
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
