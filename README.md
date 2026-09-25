@@ -7,7 +7,10 @@ rules, UI) lives in a single `index.html`; no network access is needed at runtim
 - Input styles: chat Latin (`rogor xar`, `tsqali`, `4emi`), national 2002 (`k'`, `t'`,
   `ts'`), Georgian keyboard layout (`T S C W R J Z`), Cyrillic (`гамарджоба`) and Georgian script.
 - Ambiguous letters (t → თ/ტ, k → კ/ქ/ყ, ts → ც/წ …) are resolved with the built-in
-  dictionary (~750 words, ~80 phrases) including case endings and postpositions.
+  dictionary (~1000 words, ~120 phrases) including case endings and postpositions.
+- Covers everyday speech plus bank and government SMS vocabulary (payments, cards,
+  one-time codes, loans, taxes, fines, documents, Public Service Hall …); amounts,
+  dates, codes, links and abbreviations such as GEL or PIN are kept unchanged.
 - Installable PWA, works offline, supports the system share sheet (share text → app).
 
 ## Project layout
